@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第一章 大语言模型简介 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>第一章 · 大语言模型简介</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>随着机器学习方法在语言处理问题上持续取得成功，术语「语言人工智能」经常可以与下列哪个术语互换使用？</div>
+    <ul class="options">
+      <li><span class="key">A</span>自然语言处理（NLP）</li>
+      <li><span class="key">B</span>计算机视觉</li>
+      <li><span class="key">C</span>知识图谱</li>
+      <li><span class="key">D</span>强化学习</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">语言人工智能是人工智能的子领域，专注于理解、处理和生成人类语言；随着机器学习方法的成功，它与自然语言处理（NLP）经常可以互换使用。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>词袋（bag-of-words）技术最早在什么年代被提出？</div>
+    <ul class="options">
+      <li><span class="key">A</span>20 世纪 50 年代</li>
+      <li><span class="key">B</span>20 世纪 80 年代</li>
+      <li><span class="key">C</span>2013 年</li>
+      <li><span class="key">D</span>2018 年</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">词袋早在 20 世纪 50 年代就被提出，但直到 2000 年前后才开始流行。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>词袋模型的第一步是下列哪一项？</div>
+    <ul class="options">
+      <li><span class="key">A</span>统计每个词的词频</li>
+      <li><span class="key">B</span>分词（tokenization）</li>
+      <li><span class="key">C</span>构建词表（vocabulary）</li>
+      <li><span class="key">D</span>对向量做降维</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">词袋模型的第一步是分词，即将句子拆分成单个词或子词（词元，token），之后才是构建词表、统计词频。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>word2vec 发布于哪一年？</div>
+    <ul class="options">
+      <li><span class="key">A</span>2013 年</li>
+      <li><span class="key">B</span>2014 年</li>
+      <li><span class="key">C</span>2018 年</li>
+      <li><span class="key">D</span>2020 年</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">word2vec（词向量）于 2013 年发布，是首批成功利用嵌入（embedding）捕捉文本含义的技术之一。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>在神经网络中，每个连接上的权重通常被称为什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>超参数</li>
+      <li><span class="key">B</span>模型的参数</li>
+      <li><span class="key">C</span>词表</li>
+      <li><span class="key">D</span>词元</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">神经网络由多层互连节点组成，每个连接都有一定的权重，这些权重通常被称为模型的参数。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>2014 年研究人员提出了哪项方案，大大改进了原始的 RNN 编码器-解码器架构？</div>
+    <ul class="options">
+      <li><span class="key">A</span>掩码语言建模</li>
+      <li><span class="key">B</span>注意力（attention）机制</li>
+      <li><span class="key">C</span>位置嵌入</li>
+      <li><span class="key">D</span>层归一化</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">2014 年研究者提出注意力解决方案，允许模型关注输入序列中彼此相关的部分并放大其信号，大大改进了原始架构。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>与 RNN 相比，Transformer 最关键的优势是什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>参数量更小</li>
+      <li><span class="key">B</span>支持并行训练，大大加快训练速度</li>
+      <li><span class="key">C</span>完全不需要注意力机制</li>
+      <li><span class="key">D</span>只能用于翻译任务</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">Transformer 完全基于注意力机制、摒弃了 RNN，因而支持并行训练，大大加快了训练速度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>Transformer 中的编码器块由哪两部分组成？</div>
+    <ul class="options">
+      <li><span class="key">A</span>自注意力（self-attention）和前馈神经网络</li>
+      <li><span class="key">B</span>编码器和解码器</li>
+      <li><span class="key">C</span>卷积层和池化层</li>
+      <li><span class="key">D</span>注意力层和循环层</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">编码器块围绕自注意力生成中间表示，由自注意力层和前馈神经网络两部分组成。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>BERT 的英文全称含义是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>基于 Transformer 的双向编码器表示</li>
+      <li><span class="key">B</span>生成式预训练 Transformer</li>
+      <li><span class="key">C</span>双向循环神经网络</li>
+      <li><span class="key">D</span>掩码语言模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">BERT 即 bidirectional encoder representations from Transformers（基于 Transformer 的双向编码器表示）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>BERT 基座模型包含多少个编码器？</div>
+    <ul class="options">
+      <li><span class="key">A</span>6 个</li>
+      <li><span class="key">B</span>12 个</li>
+      <li><span class="key">C</span>24 个</li>
+      <li><span class="key">D</span>96 个</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">BERT 基座模型的架构包含 12 个编码器，是一个仅编码器架构。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>BERT 输入中用于表示整个输入的附加词元是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>[SEP]</li>
+      <li><span class="key">B</span>[CLS]</li>
+      <li><span class="key">C</span>[MASK]</li>
+      <li><span class="key">D</span>[PAD]</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">[CLS]（分类词元）用于表示整个输入，通常被用作输入嵌入（input embedding）以便在分类等任务上微调模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>GPT-1 的参数量约为多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>1.17 亿</li>
+      <li><span class="key">B</span>15 亿</li>
+      <li><span class="key">C</span>1750 亿</li>
+      <li><span class="key">D</span>38 亿</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">GPT-1 在 7000 本图书和 Common Crawl 上训练，最终模型包含 1.17 亿个参数；15 亿和 1750 亿分别是 GPT-2 与 GPT-3 的规模。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>上下文长度（上下文窗口）指的是什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型训练语料库的规模</li>
+      <li><span class="key">B</span>模型可以处理的最大词元数量</li>
+      <li><span class="key">C</span>模型的参数总量</li>
+      <li><span class="key">D</span>用户提示词的字数上限</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">上下文长度代表模型可以处理的最大词元数量；由于自回归特性，生成新词元时当前上下文长度会增加。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>在本书的插图中，表示模型与生成模型分别用什么颜色和图标区分？</div>
+    <ul class="options">
+      <li><span class="key">A</span>表示模型用粉红色配对话图标，生成模型用蓝绿色配向量图标</li>
+      <li><span class="key">B</span>表示模型用蓝绿色配向量图标，生成模型用粉红色配对话图标</li>
+      <li><span class="key">C</span>两者都用蓝色，仅图标不同</li>
+      <li><span class="key">D</span>两者都用灰色，不做区分</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">表示模型用蓝绿色表示，配小向量图标（表示其关注向量和嵌入）；生成模型用粉红色表示，配小对话图标（表示其生成能力）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>本书中贯穿全书、用于生成第一段文本的主要生成模型是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>BERT-base</li>
+      <li><span class="key">B</span>Phi-3-mini</li>
+      <li><span class="key">C</span>GPT-4</li>
+      <li><span class="key">D</span>Command R</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">本书使用的主要生成模型是 Phi-3-mini：38 亿参数、可在显存小于 8 GB 的设备上运行，采用 MIT 许可证。</span>
+    </div>
+  </div>
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">1.</span>下列属于本章提到的 LLM 应用场景或任务的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>检测客户评论是正面的还是负面的（有监督分类）</li>
+      <li><span class="key">B</span>找出主题相同的工单问题（无监督分类）</li>
+      <li><span class="key">C</span>构建检索和查看相关文档的系统（语义搜索）</li>
+      <li><span class="key">D</span>根据冰箱中食材图片生成食谱（多模态任务）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">1.5 节列举的应用覆盖有监督分类（第 4/11 章）、无监督分类（第 5 章）、语义搜索（第 8 章）与多模态任务（第 9 章）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">2.</span>关于嵌入（embedding），下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>嵌入是数据的向量表示，试图捕捉数据的含义</li>
+      <li><span class="key">B</span>词袋模型在文档层面创建嵌入</li>
+      <li><span class="key">C</span>word2vec 为每个词生成一个嵌入</li>
+      <li><span class="key">D</span>嵌入可用于分类、聚类以及语义搜索与 RAG</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">词袋的一个嵌入表示整个文档，而 word2vec 为每个词生成嵌入；嵌入在分类、聚类、语义搜索与 RAG 中都有应用。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">3.</span>关于注意力机制，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>2014 年由研究人员提出，用以改进原始 RNN 架构</li>
+      <li><span class="key">B</span>允许模型关注输入序列中彼此相关的部分</li>
+      <li><span class="key">C</span>通过选择性地聚焦最关键的词来突出其重要性</li>
+      <li><span class="key">D</span>使处理较长的句子变得更容易</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">注意力通过放大相关部分的信号、聚焦关键信息，缓解了「仅用一个嵌入表示整个输入」导致的处理长句困难的问题。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">4.</span>关于 Transformer 架构，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>完全基于注意力机制，摒弃了 RNN</li>
+      <li><span class="key">B</span>支持并行训练，大大加快训练速度</li>
+      <li><span class="key">C</span>编码器和解码器组件相互堆叠</li>
+      <li><span class="key">D</span>不再是自回归的，生成新词时不依赖先前的词</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">Transformer 仍然是自回归的——每个新生成的词都会被模型用于生成下一个词，因此 D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">5.</span>关于表示模型和生成模型，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>表示模型即仅编码器模型（如 BERT），主要关注语言的表示</li>
+      <li><span class="key">B</span>生成模型即仅解码器模型（如 GPT 系列），主要关注生成文本</li>
+      <li><span class="key">C</span>表示模型通常不生成文本，生成模型通常不会被训练用于生成嵌入</li>
+      <li><span class="key">D</span>两类模型的主要区别在于底层架构和工作方式完全不同</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">本章强调，两者的主要区别并不在于底层架构和工作方式，而在于关注点：一个侧重表示（嵌入），一个侧重生成文本。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">6.</span>关于开源模型与专有模型，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>专有模型属于闭源模型，其权重和架构不向公众公开</li>
+      <li><span class="key">B</span>专有模型通常通过 API 访问，用户无须拥有强大的 GPU</li>
+      <li><span class="key">C</span>开源模型可以下载并在自己的设备上使用，但需要较强的硬件</li>
+      <li><span class="key">D</span>使用专有模型时，用户可以直接访问权重并自行微调</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">专有模型的缺点之一正是无法直接访问模型权重，用户无法自行微调，因此 D 错误。</span>
+    </div>
+  </div>
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">1.</span>本书使用「语言人工智能」这一术语，是为了涵盖那些技术上可能不是 LLM、但仍对该领域有重大影响的技术，比如检索系统。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">检索系统能为 LLM 赋予「超能力」（见第 8 章），因此被纳入语言人工智能的范畴。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">2.</span>词袋模型已经完全过时，不可能再与最新的语言模型结合使用。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">词袋虽是经典方法，但并不代表它已完全过时；第 5 章将探讨如何把它与最新的语言模型结合使用。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">3.</span>word2vec 训练出的是静态词表示：bank 这个词无论在什么上下文中使用，都会得到相同的词嵌入。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这正是静态词表示的局限：bank 既可指银行也可指河岸，其含义应随上下文变化，嵌入也应当随之变化。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">4.</span>基于注意力的 RNN 架构的序列特性有利于模型训练过程中的并行化。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">恰恰相反，这种序列特性不利于并行化，而 Transformer 支持并行训练、大大加快了训练速度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">5.</span>自注意力可以一次性查看整个序列，而不是一次处理一个词元。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">自注意力能关注单个序列内部的不同位置，从而更高效、准确地表示输入序列。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">6.</span>Transformer 解码器中的自注意力层会掩码未来的位置，以避免信息泄露。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">掩码未来位置后，生成输出时只会关注之前的位置，从而避免「看到未来」。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">7.</span>BERT 是一个仅解码器架构，专注于文本生成。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">BERT 是仅编码器架构，专注于语言表示；仅解码器的生成模型代表是 GPT 系列。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">8.</span>本书认为「LLM」只包括生成式的仅解码器模型，不包括表示模型。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">本书中的 LLM 也包括不生成文本、可在消费级硬件上运行的模型，甚至涵盖参数少于 10 亿的模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">9.</span>预训练阶段占用了创建 LLM 过程中的大部分算力和训练时间，其目标只是预测下一个词。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">预训练是宽泛的训练阶段，并不针对特定任务，而仅仅用于预测下一个词，由此得到的模型通常不会遵循指令。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">10.</span>在本书中，ChatGPT 指的是其底层模型本身，而不是产品。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">提到 ChatGPT 时，指的实际上是这款产品而非其底层模型；它最初由 GPT-3.5 LLM 驱动，此后发展出 GPT-4 等更强版本。</span>
+    </div>
+  </div>
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">1.</span>词袋模型的第一步是<span class="blank" data-ans="分词">分词</span>，即将句子拆分成单个词或子词（词元，token）。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>分词（tokenization）
+      <span class="exp">最常见的分词方法是通过空格分割，但对汉语等词间无空格的语言并不适用。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">2.</span>使用词表计算每个句子中词出现的次数，就创建了一个<span class="blank" data-ans="词袋">词袋</span>，其中的数值被称为向量表示。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>词袋（bag-of-words）
+      <span class="exp">词袋模型以数字形式创建文本的表示（representation），本书将这类模型称为表示模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">3.</span>word2vec 于<span class="blank" data-ans="2013">2013</span>年发布，是首批成功利用嵌入捕捉文本含义的技术之一。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>2013
+      <span class="exp">word2vec 通过在大量文本数据（如整个维基百科）上训练来学习词的语义表示。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">4.</span>2014 年，研究人员提出了<span class="blank" data-ans="注意力">注意力</span>解决方案，允许模型关注输入序列中彼此相关的部分并放大它们的信号。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>注意力（attention）
+      <span class="exp">注意力机制通过选择性地聚焦于句子中最关键的词来突出其重要性，第 3 章将深入讨论。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">5.</span>一种被称为<span class="blank" data-ans="Transformer">Transformer</span>的网络架构完全基于注意力机制、摒弃了 RNN，并支持并行训练。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>Transformer
+      <span class="exp">其论文标题为 “Attention Is All You Need”，编码器和解码器组件相互堆叠，是 BERT 和 GPT-1 等模型的基础。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">6.</span>BERT 采用了一种被称为<span class="blank" data-ans="掩码语言建模">掩码语言建模</span>的技术，来解决堆叠编码器难以训练的问题。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>掩码语言建模（masked language modeling）
+      <span class="exp">该方法会掩码部分输入，让模型预测被掩码的部分，从而为输入序列创建更准确的中间表示。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">7.</span>补全模型的一个要素是所谓的<span class="blank" data-ans="上下文长度">上下文长度</span>，也称为上下文窗口，代表模型可以处理的最大词元数量。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>上下文长度（context length）
+      <span class="exp">由于这些模型的自回归特性，当生成新的词元时，当前的上下文长度会增加。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">8.</span>本书中使用的主要生成模型是<span class="blank" data-ans="Phi-3-mini">Phi-3-mini</span>，它只有 38 亿参数，却性能相当不错。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>Phi-3-mini
+      <span class="exp">该模型可在显存小于 8 GB 的设备上运行，量化后甚至小于 6 GB，并采用允许商业使用的 MIT 许可证。</span>
+    </div>
+  </div>
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>先在输入框中作答，再对照参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">1.</span>简述词袋模型的工作原理，并说明它的主要缺陷。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>工作原理：</b>①对句子做分词，把句子拆分成单个词或子词（词元）；②把所有句子中不同的词汇总，创建词表（vocabulary）；③统计每个句子中各词出现的次数，得到数值向量，即词袋。<br>
+        <b>主要缺陷：</b>它仅仅把语言视为一个几乎字面意义上的「词袋」，完全忽略了词序与语义特性和含义。例如词袋无法体现上下文，bank 指银行还是河岸无法区分。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">2.</span>什么是嵌入？为什么说词嵌入能够衡量两个词的语义相似度？</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>嵌入：</b>嵌入（embedding）是数据的向量表示，试图捕捉数据的含义。word2vec 通过神经网络在大量文本上训练来学习词的语义表示。<br>
+        <b>训练方式：</b>为词表中每个词分配一个向量嵌入（如 50 个随机初始化的值），训练时取出词对，让模型预测它们是否可能在句子中相邻，并根据真实标注更新嵌入。<br>
+        <b>为何能衡量相似度：</b>如果两个词各自的相邻词集合交集更大，它们的嵌入向量就会更接近。因此可以用距离度量判断词的接近程度；把嵌入压缩到二维后可直观看到含义相似的词彼此靠近。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">3.</span>注意力机制解决了什么问题？它与 RNN 相比有何改进，又带来了什么新的局限？</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>解决的问题：</b>RNN 编码器-解码器仅用一个嵌入向量表示整个输入，使得处理较长的句子变得困难。<br>
+        <b>改进：</b>2014 年提出的注意力机制允许模型关注输入序列中彼此相关（相互「注意」）的部分并放大其信号，通过选择性聚焦最关键的词来突出其重要性；解码时不再只传递上下文嵌入，而是传递所有输入词的隐藏状态，从而更好地表征文本的序列特性与上下文。<br>
+        <b>新的局限：</b>这种序列特性不利于模型训练过程中的并行化，而 Transformer 通过完全基于注意力、摒弃 RNN 解决了并行训练的问题。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">4.</span>简述传统机器学习与 LLM 训练范式的区别，并说明预训练与微调各自的作用。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>范式区别：</b>传统机器学习通常是为特定任务（如分类、回归）训练模型的单步过程；而创建 LLM 通常至少包含两个步骤。<br>
+        <b>预训练（第一步）：</b>占用创建 LLM 的大部分算力和训练时间，在海量互联网文本语料库上训练，让模型学习语法、上下文和语言模式；该阶段不针对特定任务，仅仅用于预测下一个词，产出的模型称为基础模型或基座模型，通常不会遵循指令。<br>
+        <b>微调（第二步）：</b>也称后训练，在更具体的任务上对已训练好的模型继续训练，使 LLM 适应特定任务或表现出符合期望的行为（如遵循指令）。由于预训练成本极高，微调可以节省大量资源。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">5.</span>结合本章，说明表示模型与生成模型的区别，以及本书对「LLM」定义的界定。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>两类模型：</b>仅编码器模型（如 BERT）在本书中称为表示模型，主要关注语言的表示（如创建嵌入），通常不生成文本；仅解码器模型（如 GPT 系列）称为生成模型，主要关注生成文本，通常不会被训练用于生成嵌入。二者的主要区别并不在于底层架构和工作方式。<br>
+        <b>本书对 LLM 的界定：</b>「大」的定义是相对的，且该术语随新模型发布不断演变。本书中的 LLM 不仅涵盖生成模型，也包括不生成文本、可在消费级硬件上运行的模型，甚至介绍参数少于 10 亿的模型；并会探讨如何用嵌入模型、表示模型乃至词袋来增强 LLM 的能力。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">第一章 大语言模型简介 · 自测练习　　共 44 题</footer>
+</div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      var opts = q.querySelectorAll('ul.options li');
+      var idx = 0;
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk;
+        if (type === 'judge') {
+          isOk = (key === '√' && ans.textContent.indexOf('答案：√') > -1) ||
+                 (key === '×' && ans.textContent.indexOf('答案：×') > -1);
+        } else {
+          isOk = ans.textContent.indexOf('答案：' + key) > -1;
+        }
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+        idx++;
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){ b.classList.add('hide-ans'); });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
