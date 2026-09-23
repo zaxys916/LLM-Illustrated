@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第八章 语义搜索与RAG · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>第八章 · 语义搜索与 RAG</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>RAG 的英文全称是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Retrieval-Augmented Generation</li>
+      <li><span class="key">B</span>Recurrent Attention Generation</li>
+      <li><span class="key">C</span>Random Access Generation</li>
+      <li><span class="key">D</span>Ranking-Augmented Grounding</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">RAG 即检索增强生成（Retrieval-Augmented Generation），最早在 2020 年论文 “Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks” 中提出。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>当前语义搜索的主流技术可分为三大类，下列<strong>不属于</strong>其中之列的是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>稠密检索</li>
+      <li><span class="key">B</span>重排序</li>
+      <li><span class="key">C</span>RAG</li>
+      <li><span class="key">D</span>倒排索引压缩</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：D</span>
+      <span class="exp">8.1 节指出三大类为：稠密检索（dense retrieval）、重排序（reranking）和 RAG。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>稠密检索的核心原理是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>基于关键词出现频率与逆文档频率打分</li>
+      <li><span class="key">B</span>把搜索问题转化为查询向量与文档向量的最近邻匹配</li>
+      <li><span class="key">C</span>用大模型直接生成检索结果</li>
+      <li><span class="key">D</span>依赖人工标注的相关性等级排序</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">稠密检索基于文本嵌入，将搜索问题转化为查询向量与文档向量的最近邻匹配过程。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>重排器与稠密检索最核心的差异在于？</div>
+    <ul class="options">
+      <li><span class="key">A</span>重排器不需要查询语句</li>
+      <li><span class="key">B</span>重排器需要接收前序搜索流程的中间结果作为输入基准</li>
+      <li><span class="key">C</span>重排器只能用于英文语料</li>
+      <li><span class="key">D</span>重排器不做相关性打分</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">重排器是两阶段搜索系统中的第二阶段，接收搜索查询与初始结果集，并据此重新排序。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>单文档单向量方案中，把文档切块并聚合为单个向量时，最常用的聚合方式是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>取各向量平均值</li>
+      <li><span class="key">B</span>取各向量最大值</li>
+      <li><span class="key">C</span>取第一个块的向量</li>
+      <li><span class="key">D</span>对各向量做哈希</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">常用做法是对各块向量取平均值，但存在信息高度压缩、细节大量丢失的缺陷。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>当处理百万量级的向量时，建议采用的检索方案是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>用 NumPy 逐个精确计算距离</li>
+      <li><span class="key">B</span>Annoy 或 FAISS 等近似最近邻（ANN）搜索库</li>
+      <li><span class="key">C</span>改用 BM25 关键词搜索</li>
+      <li><span class="key">D</span>把向量降维到 1 维后排序</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">数千至数万量级用 NumPy 即可；百万量级建议使用 Annoy、FAISS 等 ANN 库，可在毫秒级响应。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>关于向量数据库（如 Weaviate、Pinecone）的特点，正确的是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>新增向量必须全量重建索引</li>
+      <li><span class="key">B</span>只支持向量距离检索，不支持过滤</li>
+      <li><span class="key">C</span>支持动态增删向量而无须重建索引，并提供过滤搜索等高级功能</li>
+      <li><span class="key">D</span>只能部署在本地单机</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">向量数据库专为向量检索设计，支持动态增删向量、过滤搜索与自定义搜索。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>微软必应采用类似 BERT 的模型实现的关键优化环节是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>查询改写</li>
+      <li><span class="key">B</span>重排序</li>
+      <li><span class="key">C</span>文本分块</li>
+      <li><span class="key">D</span>向量量化</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">将语言模型整合到搜索流程的最终环节（重排序）能显著改善搜索质量，必应即采用类似 BERT 的模型实现该优化。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>重排器输出的相关性分数含义是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>0～1 之间的分数，0 代表完全不相关，1 代表高度相关</li>
+      <li><span class="key">B</span>任意实数，数值越大越不相关</li>
+      <li><span class="key">C</span>只能是 0 或 1 的二值标签</li>
+      <li><span class="key">D</span>表示文档长度</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">该机制本质上可视为分类任务，模型输出 0～1 之间的分数，与第 4 章讨论的分类问题原理相通。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>构建 LLM 搜索重排器的常规做法是把查询与每个候选结果共同输入哪种架构？</div>
+    <ul class="options">
+      <li><span class="key">A</span>双塔（bi-encoder）架构</li>
+      <li><span class="key">B</span>交叉编码器（cross-encoder）架构</li>
+      <li><span class="key">C</span>卷积神经网络</li>
+      <li><span class="key">D</span>决策树</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">该方法在论文 “Multi-Stage Document Ranking with BERT” 中有详尽阐述，学界常称其为 monoBERT。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>平均精确率（AP）计算中，位置 k 处的精确率如何得到？</div>
+    <ul class="options">
+      <li><span class="key">A</span>前 k 个位置的相关结果数量 ÷ k</li>
+      <li><span class="key">B</span>相关结果总数 ÷ 文档库总量</li>
+      <li><span class="key">C</span>k ÷ 相关结果总数</li>
+      <li><span class="key">D</span>不相关结果数量 ÷ k</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">位置 1 有相关结果时精确率为 1/1=1；若唯一相关结果被排到第 3 位，则系统因提前呈现不相关文档而受罚（AP 为 0.3）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>相比 mAP，nDCG（归一化折损累积增益）的独特之处在于？</div>
+    <ul class="options">
+      <li><span class="key">A</span>计算速度更快</li>
+      <li><span class="key">B</span>允许文档标注不同等级的相关程度，而非只有相关/不相关二元判断</li>
+      <li><span class="key">C</span>不需要相关性判断数据</li>
+      <li><span class="key">D</span>只能用于单查询评估</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">nDCG 具有更精细的考量维度，因为测试套件与评分机制中允许标注不同等级的相关程度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>关于文本分块粒度，段落较长时建议的做法是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>一律以单个句子为块</li>
+      <li><span class="key">B</span>每 3～8 个句子划分为一个块</li>
+      <li><span class="key">C</span>整篇文档作为一个块</li>
+      <li><span class="key">D</span>按字符数均分为 10 块</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">以句子为块粒度过小，向量无法捕捉足够上下文；以段落为单位更优，段落较长时建议每 3～8 个句子一块。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>多跳 RAG（multi-hop RAG）主要面向哪类问题？</div>
+    <ul class="options">
+      <li><span class="key">A</span>用户提问冗长、需要简化的场景</li>
+      <li><span class="key">B</span>需要分步推理、连续多轮检索的复杂问题</li>
+      <li><span class="key">C</span>需要在多个数据源之间定向路由的场景</li>
+      <li><span class="key">D</span>单纯需要压缩回答长度的场景</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">如“2023 年排名最靠前的汽车制造商有哪几个？它们是否都生产电动汽车？”需先检索厂商，再逐一检索各厂商的电动车信息。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>Cohere 的 Rerank 端点最突出的使用特点是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>必须自行训练重排模型</li>
+      <li><span class="key">B</span>仅需传入查询和文本即可获得优化排序，无须训练或调参</li>
+      <li><span class="key">C</span>只支持 15 个文档以内</li>
+      <li><span class="key">D</span>只能处理中文</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">基础示例中传入了全部 15 个文档；实际应用中索引可能有成千上万条，通常先筛选 100 或 1000 个候选再交给重排器。</span>
+    </div>
+  </div>
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有 2 个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">1.</span>下列属于语义搜索三大核心类型的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>稠密检索</li>
+      <li><span class="key">B</span>重排序</li>
+      <li><span class="key">C</span>RAG</li>
+      <li><span class="key">D</span>拼写纠错</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">语义搜索三大类：稠密检索、重排序、RAG。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">2.</span>关于稠密检索的缺陷，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>当文本中完全不存在答案时，系统仍会返回结果及相似度距离</li>
+      <li><span class="key">B</span>无法精准匹配特定短语，这类场景更适合关键词匹配</li>
+      <li><span class="key">C</span>应用于训练数据之外的领域时，性能会显著下降</li>
+      <li><span class="key">D</span>无法处理任何超过 100 个词的查询</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">因此建议采用混合搜索（语义搜索 + 关键词搜索），并通过设置相似度/最大距离阈值过滤无关结果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">3.</span>单文档单向量方案的常见实现方式包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>仅嵌入文档的代表性段落（如标题或开头），忽略其余内容</li>
+      <li><span class="key">B</span>将文档分割为多个块分别嵌入，再把各向量聚合为单个向量</li>
+      <li><span class="key">C</span>为每个句子单独建立一条索引记录</li>
+      <li><span class="key">D</span>把文档翻译成英文后再嵌入</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：AB</span>
+      <span class="exp">C 属于单文档多向量方案的思路；A 会导致大量信息未被索引，B 会因取平均而丢失细节。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">4.</span>为增强文本块的上下文相关性，可采取的方式有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>在块中附加文档标题</li>
+      <li><span class="key">B</span>引入一部分上下文内容，构建重叠块结构</li>
+      <li><span class="key">C</span>把块长度统一压缩到 10 个字符</li>
+      <li><span class="key">D</span>删除所有停用词后再嵌入</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：AB</span>
+      <span class="exp">重叠块（相邻块包含部分重复文本）能有效防止上下文割裂，保留片段间的相关性。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">5.</span>下列属于高级 RAG 技术的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>查询改写</li>
+      <li><span class="key">B</span>多查询 RAG</li>
+      <li><span class="key">C</span>多跳 RAG</li>
+      <li><span class="key">D</span>查询路由</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">8.3.4 节介绍了查询改写、多查询 RAG、多跳 RAG、查询路由与智能体 RAG。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">6.</span>论文 “Evaluating Verifiability in Generative Search Engines” 提出的评估维度包含？</div>
+    <ul class="options">
+      <li><span class="key">A</span>流畅性（fluency）</li>
+      <li><span class="key">B</span>感知效用（perceived utility）</li>
+      <li><span class="key">C</span>引用内容对相关论断支持的有效性</li>
+      <li><span class="key">D</span>模型的推理延迟（latency）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">该研究通过人工评估对比多种生成式搜索系统，核心维度包括流畅性、感知效用与引用支持有效性。</span>
+    </div>
+  </div>
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>正确打“√”，错误打“×”</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">1.</span>稠密检索依靠关键词匹配实现精准检索。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">语义搜索的核心在于通过<strong>语义理解</strong>而非简单的关键词匹配实现精准检索；稠密检索基于文本嵌入的向量相似度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">2.</span>生成式搜索属于广义的 RAG 系统范畴。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这类系统通过整合检索机制增强文本生成，可抑制幻觉、提升事实准确性。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">3.</span>仅嵌入文档开头部分的做法不会遗漏任何可检索信息。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">该方式虽适用于快速搭建演示系统，但会导致大量信息未被索引而无法检索，实际系统中并非最佳选择。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">4.</span>混合搜索指的是结合语义搜索与关键词搜索。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这是建议采用混合搜索而非单纯依赖稠密检索的重要原因。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">5.</span>面向稠密检索的嵌入模型微调，其核心作用是拉近相关查询与文档的距离，同时推离不相关查询。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">微调需要构建“查询—相关文档”的训练数据，同时引入无关查询作为负例。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">6.</span>在 MIRACL 多语言基准测试中，重排器可使 nDCG@10 从 36.5 提升至 62.8。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这直观说明重排序在实际应用中能显著提升搜索质量。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">7.</span>在“唯一相关文档被排在第 3 位”的例子中，系统 1 的 AP 得分为 1，系统 2 仅为 0.3。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">AP 能够区分“同样只召回 1 个相关文档，但排序位置不同”的两个系统。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">8.</span>RAG 只能借助托管的大模型实现，本地小模型无法复现基础流程。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">本地模型可以复现基础功能，只是性能可能不及大型托管模型，且通常无法实现文本片段引用。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">9.</span>截至本书撰写时，所有 LLM 都已具备查询改写、多跳检索等高级 RAG 功能。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">并非所有 LLM 都具备这些功能，当时仅有少数头部托管模型尝试支持，如 Cohere 的 Command R+。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">10.</span>RAG 系统的评估需要涵盖忠实度、流畅性等多个维度，既可人工评估，也可借助 LLM-as-a-judge 量化。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">Ragas 是实现此类评估的开源工具库，还包含忠实度（faithfulness）与答案相关性（answer relevance）指标。</span>
+    </div>
+  </div>
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击“显示答案”查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">1.</span>RAG 的中文全称是<span class="blank" data-ans="检索增强生成">检索增强生成</span>，其最早在 2020 年的论文中被提出。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>检索增强生成（Retrieval-Augmented Generation）
+      <span class="exp">它兼具检索与生成能力，可视为传统生成系统的升级版。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">2.</span>稠密检索将搜索问题转化为查询向量与文档向量的<span class="blank" data-ans="最近邻">最近邻</span>匹配过程。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>最近邻（nearest neighbor）
+      <span class="exp">语义相近的文本在向量空间中彼此邻近。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">3.</span>当向量规模达到百万量级时，建议采用<span class="blank" data-ans="近似最近邻（ANN）">近似最近邻（ANN）</span>搜索库（如 Annoy、FAISS）进行优化检索。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>近似最近邻（approximate nearest neighbor，ANN）
+      <span class="exp">部分方案还可借助 GPU 加速与分布式集群部署。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">4.</span>重排器通常把查询与每个候选结果共同输入<span class="blank" data-ans="交叉编码器">交叉编码器</span>架构的 LLM，从而生成相关性评分。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>交叉编码器（cross-encoder）
+      <span class="exp">文档采用批量处理，但每个文档都会单独与查询进行匹配评估，该方法常被称为 monoBERT。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">5.</span>两阶段搜索系统中，第一阶段通常先筛选出<span class="blank" data-ans="100 或 1000">100 或 1000</span>个候选结果，再提交给重排器。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>100 或 1000
+      <span class="exp">第一阶段检索可采用关键词搜索、稠密检索，或更优的混合搜索。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">6.</span>均值平均精确率的英文缩写是<span class="blank" data-ans="mAP">mAP</span>，归一化折损累积增益的缩写是<span class="blank" data-ans="nDCG">nDCG</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>mAP（mean average precision）、nDCG（normalized discounted cumulative gain）
+      <span class="exp">完整的评估套件包含文档库、查询集合与相关性判断三大要素。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">7.</span>将用户冗长的原始提问转化为更利于检索的简洁形式，这种高级 RAG 技术称为<span class="blank" data-ans="查询改写">查询改写</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>查询改写（query rewriting）
+      <span class="exp">例如把关于“写企鹅还是海豚”的长段描述改写为“海豚生活在哪里”。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">8.</span>使模型具备多数据源定向检索能力的技术称为<span class="blank" data-ans="查询路由">查询路由</span>；本机示例中使用的嵌入模型是<span class="blank" data-ans="BAAI/bge-small-en-v1.5">BAAI/bge-small-en-v1.5</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>查询路由（query routing）；BAAI/bge-small-en-v1.5
+      <span class="exp">查询路由示例：HR 问题→公司知识库（Notion），客户数据问题→CRM（Salesforce）。</span>
+    </div>
+  </div>
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>先自行作答，再对照参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">1.</span>什么是“幻觉”？RAG 为何能缓解该问题？</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>幻觉</b>指文本生成模型虽能流畅自信地输出内容，但在准确性与时效性上存在不足的现象。<br>
+        RAG（检索增强生成）在生成前先从外部知识库实时检索相关信息，并将检索结果作为提示词输入 LLM，使模型基于有事实依据的上下文作答，从而有效抑制幻觉、提升事实准确性，并让输出与特定数据集保持逻辑一致性。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">2.</span>为什么长文本必须做分块处理？单文档单向量与单文档多向量两种方案各有什么优缺点？</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>原因：</b>Transformer 语言模型存在上下文长度（词元数）限制，无法直接输入超长文本。<br>
+        <b>单文档单向量：</b>用一个向量表示整篇文档。可仅嵌入代表性段落（如标题、开头），实现简单但大量信息未被索引；也可分块嵌入后取平均聚合，但信息被高度压缩、细节大量丢失。<br>
+        <b>单文档多向量：</b>把文档切成较小的块做块级嵌入，索引由文档级变为块级。优势是覆盖完整、能捕捉独立语义单元，索引表达力更强；代价是需合理设计分块粒度（如段落分块、较长段落每 3～8 句一块，或用附加标题、重叠块保留上下文）。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">3.</span>简述重排序（reranking）在搜索系统中的位置与工作机制。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>位置：</b>重排序是多阶段搜索流程中的第二阶段。第一阶段（关键词搜索、稠密检索或混合搜索）先召回约 100～1000 个候选，再交给重排器精排。<br>
+        <b>机制：</b>把查询与每个候选文档共同输入交叉编码器架构的 LLM（monoBERT 方法），联合分析后输出 0～1 的相关性分数（0 完全不相关，1 高度相关），据此重新排序，使最相关结果位于前列。该过程本质上是分类任务。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">4.</span>请说明平均精确率（AP）的计算逻辑，以及如何扩展为均值平均精确率（mAP）。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>AP（单查询）：</b>从位置 1 开始逐项计算精确率，位置 k 的精确率 = 前 k 个位置中相关结果数 ÷ k；只对相关文档所在位置取分，忽略不相关文档，再对这些精确率求平均。唯一相关文档排第 1 位得 1 分；排到第 3 位则只得 0.3 分，即因提前呈现不相关文档而受罚。<br>
+        <b>mAP：</b>对测试套件中每个查询分别计算 AP，再对所有查询的 AP 取均值，得到一个可用于横向比较不同搜索系统的单一指标。之所以叫“均值平均”而非“平均平均”，只是出于通顺与美观。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">5.</span>列举至少三种高级 RAG 技术，并各用一句话说明其解决的问题。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>①查询改写：</b>把冗长或依赖对话上下文的提问改写为简洁的检索式查询，提升检索命中率。<br>
+        <b>②多查询 RAG：</b>为复杂问题生成多个关联查询（如分别检索 NVIDIA 2020 与 2023 年财报），再汇总最佳结果作答。<br>
+        <b>③多跳 RAG：</b>面向需要分步推理的问题执行连续检索（先查厂商，再逐个查其电动车业务）。<br>
+        <b>④查询路由：</b>让模型按问题类型定向选择数据源（HR 问题→Notion，客户数据→Salesforce）。<br>
+        <b>⑤智能体 RAG：</b>把数据源抽象为工具，由 LLM 评估信息价值并整合多源数据，逐步逼近可在现实世界执行任务的智能体。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">第八章 语义搜索与 RAG · 自测练习　　共 44 题</footer>
+</div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      var opts = q.querySelectorAll('ul.options li');
+      var idx = 0;
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk;
+        if (type === 'judge') {
+          isOk = (key === '√' && ans.textContent.indexOf('答案：√') > -1) ||
+                 (key === '×' && ans.textContent.indexOf('答案：×') > -1);
+        } else {
+          isOk = ans.textContent.indexOf('答案：' + key) > -1;
+        }
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+        idx++;
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){ b.classList.add('hide-ans'); });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+Looking in indexes: https://mirrors.aliyun.com/pypi/simple/
+Requirement already satisfied: gguf in .\.venv\Lib\site-packages (0.19.0)
+Requirement already satisfied: numpy>=1.17 in .\.venv\Lib\site-packages (from gguf) (2.5.3)
+Requirement already satisfied: pyyaml>=5.1 in .\.venv\Lib\site-packages (from gguf) (6.0.3)
+Requirement already satisfied: requests>=2.25 in .\.venv\Lib\site-packages (from gguf) (2.34.2)
+Requirement already satisfied: tqdm>=4.27 in .\.venv\Lib\site-packages (from gguf) (4.70.1)
+Requirement already satisfied: charset_normalizer<4,>=2 in .\.venv\Lib\site-packages (from requests>=2.25->gguf) (3.5.1)
+Requirement already satisfied: idna<4,>=2.5 in .\.venv\Lib\site-packages (from requests>=2.25->gguf) (3.20)
+Requirement already satisfied: urllib3<3,>=1.26 in .\.venv\Lib\site-packages (from requests>=2.25->gguf) (2.8.0)
+Requirement already satisfied: certifi>=2023.5.7 in .\.venv\Lib\site-packages (from requests>=2.25->gguf) (2026.7.22)
+Requirement already satisfied: colorama in .\.venv\Lib\site-packages (from tqdm>=4.27->gguf) (0.4.6)
