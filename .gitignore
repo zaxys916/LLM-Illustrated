@@ -5,3 +5,5 @@
 !.env.example
 
 models/
+
+.ipynb_checkpoints/

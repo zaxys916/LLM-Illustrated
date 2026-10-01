@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第九章 多模态 LLM · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>第九章 · 多模态 LLM</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>在本书中，文本、图像、音频、视频或传感器数据等，每种数据类型被称为什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模态（modality）</li>
+      <li><span class="key">B</span>通道（channel）</li>
+      <li><span class="key">C</span>词元（token）</li>
+      <li><span class="key">D</span>特征（feature）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">每种数据类型称为一种模态；能够处理文本与图像等多种模态的模型被称为多模态（multimodal）模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>关于多模态模型的能力，下列说法正确的是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型接收某种模态作为输入，就一定能生成同种模态的输出</li>
+      <li><span class="key">B</span>模型接收某种模态作为输入，但不一定能生成对应模态的输出</li>
+      <li><span class="key">C</span>多模态模型只能处理文本与图像两种模态</li>
+      <li><span class="key">D</span>多模态模型必须同时生成图像与文本</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">如图 9-1 所述，多模态模型接收某种模态作为输入，但不一定能生成对应模态的输出。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>视觉 Transformer（ViT）在图像识别任务中展现出超越哪种传统模型的性能？</div>
+    <ul class="options">
+      <li><span class="key">A</span>循环神经网络（RNN）</li>
+      <li><span class="key">B</span>卷积神经网络（CNN）</li>
+      <li><span class="key">C</span>支持向量机（SVM）</li>
+      <li><span class="key">D</span>决策树（decision tree）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">ViT 由将 Transformer 迁移至视觉领域的尝试诞生，在图像识别任务中超越了传统卷积神经网络（CNN）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>由于图像并非由词构成，ViT 是如何对图像进行「分词」的？</div>
+    <ul class="options">
+      <li><span class="key">A</span>把每个像素作为输入</li>
+      <li><span class="key">B</span>沿水平方向和垂直方向进行网格化切割，得到规则排列的图像块</li>
+      <li><span class="key">C</span>先用 OCR 转成文本再分词</li>
+      <li><span class="key">D</span>直接对整张图像做线性嵌入，不再切割</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">ViT 将原始图像沿水平方向和垂直方向做网格化切割，得到规则排列的图像块（patch），从而保留原始 Transformer 编码器的架构特性。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>为什么 ViT 无法像文本词元那样，直接为每个图像块赋予固定的 ID？</div>
+    <ul class="options">
+      <li><span class="key">A</span>图像块的数量永远超过词表容量</li>
+      <li><span class="key">B</span>图像块在不同场景中的重复概率远低于文本词元</li>
+      <li><span class="key">C</span>图像块不含任何像素信息</li>
+      <li><span class="key">D</span>图像块无法进入编码器</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">由于图像的多样性，图像块在不同场景中的重复概率远低于文本词元，因此转而对其做线性嵌入，转换为数值化的嵌入向量。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>原始 ViT 论文实际采用的图像分割粒度是多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>3×3</li>
+      <li><span class="key">B</span>8×8</li>
+      <li><span class="key">C</span>16×16</li>
+      <li><span class="key">D</span>224×224</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">示例中的 3×3 分块仅为示意，原始论文方案实际采用 16×16，呼应论文标题“An Image is Worth 16x16 Words”。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>CLIP 的英文全称含义是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>对比语言-图像预训练</li>
+      <li><span class="key">B</span>跨语言图像处理</li>
+      <li><span class="key">C</span>图像分类预训练</li>
+      <li><span class="key">D</span>连续学习图像模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">CLIP 即 contrastive language-image pre-training（对比语言-图像预训练），是当前最主流的多模态嵌入模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>CLIP 采用双编码器架构，其两个编码器分别处理什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>文本编码器处理描述文本，图像编码器提取视觉特征</li>
+      <li><span class="key">B</span>图像编码器处理描述文本，文本编码器提取视觉特征</li>
+      <li><span class="key">C</span>两个编码器都只处理文本</li>
+      <li><span class="key">D</span>两个编码器都只处理图像</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">CLIP 用文本编码器处理描述文本生成语义嵌入、用图像编码器提取视觉特征生成图像嵌入，经联合训练后配对的图文嵌入将高度对齐。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>CLIP 训练中用什么指标来比较嵌入向量之间的匹配程度？</div>
+    <ul class="options">
+      <li><span class="key">A</span>欧氏距离</li>
+      <li><span class="key">B</span>余弦相似度</li>
+      <li><span class="key">C</span>曼哈顿距离</li>
+      <li><span class="key">D</span>皮尔逊相关系数</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">生成的图文嵌入对通过余弦相似度进行比较；余弦相似度是向量间夹角的余弦值，等于两嵌入向量的点积除以各自长度的乘积。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>在 CLIP 模型中，[CLS] 词元专门用于什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>表示整个输入句子</li>
+      <li><span class="key">B</span>提取图像嵌入特征</li>
+      <li><span class="key">C</span>标记句子结束</li>
+      <li><span class="key">D</span>掩码部分输入</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">CLIP 分词结果中缺少 [CLS] 词元，因为在 CLIP 中该词元实际上专门用于提取图像嵌入特征；文本首尾则分别添加起始词元与结束词元，以便与图像嵌入相区分。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>示例中 CLIP 为一句描述文本生成的嵌入向量包含多少个值？</div>
+    <ul class="options">
+      <li><span class="key">A</span>50</li>
+      <li><span class="key">B</span>256</li>
+      <li><span class="key">C</span>512</li>
+      <li><span class="key">D</span>1024</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">CLIP 为该字符串生成包含 512 个值的嵌入向量；图像嵌入的形状（[1, 512]）与文本嵌入完全一致，因此两者可以互相比较。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>BLIP-2 中用来连接预训练视觉编码器与预训练 LLM 的智能桥梁是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Q-Former（查询式 Transformer）</li>
+      <li><span class="key">B</span>LoRA</li>
+      <li><span class="key">C</span>Adapter</li>
+      <li><span class="key">D</span>注意力池化层</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">BLIP-2 通过构建名为查询式 Transformer（Querying Transformer，Q-Former）的智能桥梁，巧妙连接预训练视觉编码器与预训练 LLM。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>在 BLIP-2 中，唯一需要训练的核心组件是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>冻结的 ViT</li>
+      <li><span class="key">B</span>Q-Former</li>
+      <li><span class="key">C</span>预训练 LLM</li>
+      <li><span class="key">D</span>分词器</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">BLIP-2 仅需训练 Q-Former，而无须从零训练视觉编码器与 LLM，从而最大化利用现有技术成果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>BLIP-2 步骤 2 中，投影层（全连接线性层）的主要作用是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>提升输入图像的分辨率</li>
+      <li><span class="key">B</span>对嵌入向量做维度投影，确保其与 LLM 的输入维度兼容</li>
+      <li><span class="key">C</span>扩充训练数据集</li>
+      <li><span class="key">D</span>替换文本分词器</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">系统通过全连接线性层对嵌入向量进行维度投影，确保其与 LLM 的输入维度兼容，从而完成视觉到语言的转换。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>BLIP-2 在文本预处理时采用了哪种分词器？</div>
+    <ul class="options">
+      <li><span class="key">A</span>BERT WordPiece</li>
+      <li><span class="key">B</span>GPT2Tokenizer</li>
+      <li><span class="key">C</span>T5 SentencePiece</li>
+      <li><span class="key">D</span>Llama BPE</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">该 BLIP-2 模型采用 GPT2Tokenizer；某些词元以特殊符号 Ġ 开头，实际上代表空格。</span>
+    </div>
+  </div>
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">1.</span>CLIP 及其同类模型的跨模态对齐能力可支撑下列哪些核心应用场景？</div>
+    <ul class="options">
+      <li><span class="key">A</span>零样本分类</li>
+      <li><span class="key">B</span>语义聚类</li>
+      <li><span class="key">C</span>跨模态检索</li>
+      <li><span class="key">D</span>生成引导</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">9.2.1 节列出四类场景：零样本分类、语义聚类、跨模态检索、生成引导（如驱动稳定扩散模型实现更精准的文本-图像对齐）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">2.</span>关于视觉 Transformer（ViT），下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>沿图像的水平方向和垂直方向进行网格化切割</li>
+      <li><span class="key">B</span>图像块的展平输入可被视为视觉领域的「词元」</li>
+      <li><span class="key">C</span>对图像块实施线性嵌入，将其转换为数值化的嵌入向量</li>
+      <li><span class="key">D</span>嵌入向量进入编码器后，视觉与文本模态的处理路径完全相同</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">ViT 通过分块与线性嵌入把图像转为数值表示，其向量以与文本词元相同的方式进入编码器，这种跨模态兼容性正是扩展语言模型多模态能力的基础。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">3.</span>BLIP-2 步骤 1 中 Q-Former 需要完成的三个目标任务包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>图像-文本对比学习</li>
+      <li><span class="key">B</span>图像-文本匹配</li>
+      <li><span class="key">C</span>基于图像的文本生成</li>
+      <li><span class="key">D</span>语音-文本对齐</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">三个目标为图像-文本对比学习（对齐嵌入空间）、图像-文本匹配（判断配对是否为正例的二分类任务）、基于图像的文本生成；本章未涉及语音-文本对齐，故 D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">4.</span>关于 BLIP-2 的架构，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>仅需训练 Q-Former，无须从零训练视觉编码器与 LLM</li>
+      <li><span class="key">B</span>Q-Former 包含两个共享注意力层的核心模块</li>
+      <li><span class="key">C</span>图像 Transformer 与冻结的 ViT 交互，提取深层视觉特征</li>
+      <li><span class="key">D</span>必须从头重新构建整个系统架构</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">BLIP-2 采用模块化设计，仅训练 Q-Former 这一视觉与语言之间的桥梁，避免从零重建整套系统，故 D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">5.</span>下列模型中，采用预训练的类 CLIP 视觉编码器与文本 LLM 进行特征对接的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>LLaVA</li>
+      <li><span class="key">B</span>Idefics2</li>
+      <li><span class="key">C</span>BLIP-2</li>
+      <li><span class="key">D</span>ViT（仅作为视觉编码器本身）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">BLIP-2 之后涌现出多个类似架构的视觉 LLM，如 LLaVA 与基于 Mistral 7B 的 Idefics2；ViT 只是被对接的视觉编码器，本身不是这类多模态生成模型，故 D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">6.</span>关于多模态输入预处理，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>处理器（processor）类似于分词器，将非结构化输入转换为模型所需的规范化表示</li>
+      <li><span class="key">B</span>图像预处理会把不同比例的图像统一转换为正方形</li>
+      <li><span class="key">C</span>输入特别宽或特别高的图像时，可能因尺寸调整导致画面失真</li>
+      <li><span class="key">D</span>GPT2Tokenizer 中某些以 Ġ 开头的词元实际上代表空格</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">处理器将图像与文本转换为规范化表示；图像会被统一调整为 224×224 正方形，故宽高比悬殊时可能失真；Ġ 源于空格字符的码位被增加 256 后得到的可打印字符。</span>
+    </div>
+  </div>
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">1.</span>多模态模型既然接收某种模态作为输入，就一定能生成对应模态的输出。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">本书明确指出，多模态模型接收某种模态作为输入，但不一定能生成对应模态的输出。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">2.</span>由于图像块在不同场景中的重复概率远低于文本词元，ViT 无法直接为图像块赋予固定的 ID，转而对其进行线性嵌入。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">正因如此，系统对图像块实施线性嵌入，将其转换为蕴含语义信息的数值化嵌入向量，作为 Transformer 的标准化输入。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">3.</span>与原始 Transformer 类似，ViT 的核心功能是将非结构化的图像数据转换为可用于分类等任务的数值表示。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">ViT 依赖 Transformer 的编码器组件，其核心功能与原始 Transformer 一致，都是把非结构化数据转换为可用于下游任务的数值表示。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">4.</span>示例中采用的 3×3 分块就是原始 ViT 论文实际采用的分割粒度。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">3×3 分块仅为示意用途，原始论文方案实际采用 16×16 的分割粒度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">5.</span>CLIP 生成的图像嵌入与文本嵌入处于彼此独立的向量空间。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">CLIP 的跨模态嵌入共享同一向量空间，因此图像特征可直接与文本语义进行量化比较。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">6.</span>CLIP 训练时需引入无关图像和文本描述作为负例，以建立区分异质样本的能力。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">训练时最大化匹配图文对的相似度、最小化非匹配对的相似度；建模相似度不仅要捕捉共性，更要建立区分异质样本的能力。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">7.</span>BLIP-2 的训练流程分为两个阶段，第一阶段使用图像-文本对进行联合表示学习。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">步骤 1 使用类似 CLIP 的图像-文本对进行联合表示学习，使模型同步掌握视觉与语言的对齐关系；步骤 2 再将表示转化为软视觉提示词输入 LLM。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">8.</span>在 BLIP-2 的步骤 2 中，Q-Former 学到的嵌入经投影层输入 LLM，充当软视觉提示词。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这些嵌入通过投影层输入 LLM，本质上充当软视觉提示词，使 LLM 的生成过程受 Q-Former 提取的视觉表示调控。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">9.</span>BLIP-2 的图像预处理会保留原始图像的长宽比，因此不会导致画面失真。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">预处理会把不同比例的图像统一转换为 224×224 的正方形，因此输入特别宽或特别高的图像时，可能因尺寸调整而导致画面失真。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">10.</span>视觉问答（VQA）中，模型需要同步处理视觉信息与文本问题。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">VQA 同时呈现图像与文本问题两种模态，要求模型在解答时同步处理视觉信息与文本问题，而非仅做线性的模态转换。</span>
+    </div>
+  </div>
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">1.</span>能够处理文本与图像（每种数据类型称为一种<span class="blank" data-ans="模态">模态</span>）的模型，被称为多模态（multimodal）模型。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>模态（modality）
+      <span class="exp">如图 9-1 所注，除文本、图像外，音频、视频或传感器数据等也都是常见模态；模型接收某种模态作为输入，但不一定能生成对应模态的输出。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">2.</span>ViT 将原始图像切割为规则排列的<span class="blank" data-ans="图像块">图像块</span>（patch），进而实现特征提取。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>图像块（patch）
+      <span class="exp">图像块的展平输入可视为视觉领域的「词元」，经过线性嵌入后以与文本词元相同的方式进入编码器。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">3.</span>原始 ViT 论文采用了<span class="blank" data-ans="16×16">16×16</span>的分割粒度，这呼应了论文标题“An Image is Worth 16x16 Words”。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>16×16
+      <span class="exp">示例中使用的 3×3 仅为示意用途，原始论文的实际分割粒度为 16×16。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">4.</span>多模态嵌入模型可在同一<span class="blank" data-ans="向量空间">向量空间</span>中为不同模态生成嵌入向量。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>向量空间（vector space）
+      <span class="exp">得益于共享向量空间的特性，可比较不同模态的语义表示，例如用文本检索最相关的图像，或探究哪些文本与特定图像相关性最高。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">5.</span>CLIP 采用<span class="blank" data-ans="双编码器">双编码器</span>架构：文本编码器处理描述文本，图像编码器提取视觉特征。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>双编码器
+      <span class="exp">经过联合训练后，配对的图文数据将在向量空间中获得高度对齐的嵌入向量表示。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">6.</span>CLIP 的训练方法被称为<span class="blank" data-ans="对比学习">对比学习</span>（contrastive learning），本书将在第 10 章剖析其内在机制。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>对比学习（contrastive learning）
+      <span class="exp">训练中最大化匹配图文对的相似度、最小化非匹配对的相似度，并根据预期相似度更新文本编码器与图像编码器参数。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">7.</span>BLIP-2 通过构建名为<span class="blank" data-ans="Q-Former">Q-Former</span>（查询式 Transformer）的智能桥梁，连接预训练视觉编码器与预训练 LLM。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>Q-Former（查询式 Transformer）
+      <span class="exp">Q-Former 是系统中唯一需要训练的核心组件，它在同一维度空间中学习视觉与文本表示，作为 LLM 的软提示词。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">8.</span>BLIP-2 的步骤 2 通过<span class="blank" data-ans="投影层">投影层</span>（全连接线性层）对嵌入向量进行维度投影，确保其与 LLM 的输入维度兼容。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>投影层（projection layer）
+      <span class="exp">该视觉到语言的转换过程使投影后的嵌入向量成为条件化生成的软视觉提示词。</span>
+    </div>
+  </div>
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>先在输入框中作答，再对照参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">1.</span>什么是多模态模型？简述 ViT 如何把图像转换为可用于 Transformer 编码器的数值表示。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>多模态模型：</b>每种数据类型称为一种模态，能够处理文本与图像等多种数据模态（如图像、音频、视频或传感器数据）的模型即多模态（multimodal）模型；它接收某种模态作为输入，但不一定能生成对应模态的输出。<br>
+        <b>ViT 的思路：</b>图像并非由词构成，无法直接分词，ViT 因此沿图像的水平方向和垂直方向做网格化切割，得到规则排列的图像块（patch），相当于视觉领域的「词元」。<br>
+        <b>数值化：</b>由于图像块重复概率远低于文本词元、无法赋予固定 ID，ViT 对图像块实施线性嵌入，将其转换为数值化的嵌入向量（原始论文的分割粒度为 16×16）。<br>
+        <b>统一处理：</b>这些嵌入向量随后以与文本词元完全相同的方式进入编码器，视觉与文本模态的处理路径完全一致，这种跨模态兼容性为构建多模态模型奠定了基础。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">2.</span>简述 CLIP 的跨模态嵌入生成机制（含数据形式、双编码器与训练目标）。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>数据形式：</b>需要一个包含数百万张图像及其对应描述文本的训练数据集，为跨模态对齐提供基础。<br>
+        <b>双编码器：</b>CLIP 用文本编码器处理描述文本生成语义嵌入、用图像编码器提取视觉特征生成图像嵌入，为每一组图文创建两个向量表示。<br>
+        <b>相似度计算：</b>生成的图文嵌入对通过余弦相似度比较（即点积除以各自长度的乘积）；训练初期两者尚未对齐，相似度较低。<br>
+        <b>训练目标：</b>优化嵌入间的相似度，最大化匹配图文对的相似度、同时最小化非匹配对的相似度，并据此更新两个编码器参数，重复进行。<br>
+        <b>方法与结果：</b>这种训练方法称为对比学习（contrastive learning，第 10 章详析）；最终使猫的图像嵌入与「这是一只猫」的文本嵌入高度相似，且配对的图文嵌入共享同一向量空间。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">3.</span>列举并简述 CLIP 及其同类模型支撑的核心应用场景。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>零样本分类：</b>通过比对图像嵌入与类别描述文本的嵌入向量，实现无需训练数据的精准分类。<br>
+        <b>语义聚类：</b>将图像集合与关键词库进行联合聚类，揭示视觉内容与文本概念的潜在关联。<br>
+        <b>跨模态检索：</b>在海量多模态数据中，实现文本-图像的双向即时检索。<br>
+        <b>生成引导：</b>驱动图像生成模型（如稳定扩散模型）实现更精准的文本-图像对齐。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">4.</span>简述 BLIP-2 的设计思想与两阶段训练流程，并说明 Q-Former 的作用。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>设计思想：</b>从零构建多模态语言模型需数十亿级图文数据与海量算力，BLIP-2 采用模块化设计，通过 Q-Former（查询式 Transformer）连接预训练视觉编码器（ViT）与预训练 LLM，仅训练 Q-Former，即可为传统语言模型赋予视觉认知能力。<br>
+        <b>Q-Former 结构：</b>包含两个共享注意力层的模块——图像 Transformer 与冻结的 ViT 交互以提取深层视觉特征，文本 Transformer 对接 LLM 实现语义理解与生成。<br>
+        <b>步骤 1（联合表示学习）：</b>使用图像-文本对，完成三个目标任务——图像-文本对比学习、图像-文本匹配（二分类）、基于图像的文本生成，从而为冻结 ViT 的嵌入空间注入语义。<br>
+        <b>步骤 2（软视觉提示词）：</b>步骤 1 学到的可学习嵌入经投影层（全连接线性层）做维度投影后输入 LLM，充当软视觉提示词，使 LLM 的生成受视觉表示调控。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">5.</span>简述多模态输入预处理中图像与文本的处理流程，并指出图像预处理的潜在局限。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>整体组件：</b>加载「处理器 + 模型」两个核心组件；处理器类似语言模型中的分词器，把非结构化输入（图像与文本）转换为模型所需的规范化表示。<br>
+        <b>图像处理：</b>处理器按模型要求的尺寸与形状对图像做预处理，把不同比例的原图统一转换为 224×224 的正方形像素矩阵，再交由模型生成软视觉提示词。<br>
+        <b>文本处理：</b>调用分词工具（如 blip_processor.tokenizer，本例为 GPT2Tokenizer）将文本转为词元 ID；某些词元以 Ġ 开头，代表空格（空格字符码位 32 增加 256 后得到可打印的 Ġ），展示时常转换为下划线表示词的起始位置。<br>
+        <b>潜在局限：</b>由于图像被统一裁剪缩放为正方形，输入特别宽或特别高的图像时，可能因尺寸调整导致画面失真。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">第九章 多模态 LLM · 自测练习　　共 44 题</footer>
+</div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      var opts = q.querySelectorAll('ul.options li');
+      var idx = 0;
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk;
+        if (type === 'judge') {
+          isOk = (key === '√' && ans.textContent.indexOf('答案：√') > -1) ||
+                 (key === '×' && ans.textContent.indexOf('答案：×') > -1);
+        } else {
+          isOk = ans.textContent.indexOf('答案：' + key) > -1;
+        }
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+        idx++;
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){ b.classList.add('hide-ans'); });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
