@@ -378,17 +378,17 @@
   </div>
 
   <div class="q" data-type="single">
-    <div class="stem"><span class="idx">15.</span>仅用 32 个标注句子完成 SetFit 训练后，测试集上的 F1 分数达到多少？</div>
+    <div class="stem"><span class="idx">15.</span>仅用 32 个标注句子完成 SetFit 训练后，测试集上评估得到的 accuracy 约为多少？</div>
     <ul class="options">
       <li><span class="key">A</span>0.63</li>
       <li><span class="key">B</span>0.80</li>
-      <li><span class="key">C</span>0.84</li>
-      <li><span class="key">D</span>0.85</li>
+      <li><span class="key">C</span>0.85</li>
+      <li><span class="key">D</span>0.90</li>
     </ul>
     <div class="qfoot"><button class="tbtn">显示答案</button></div>
     <div class="ans">
       <span class="lbl">答案：C</span>
-      <span class="exp">仅 32 个标注句子 F1 就达 0.84；第 4 章在完整数据的嵌入向量上训练逻辑回归也得到相同性能，充分体现标注少量样本的潜力。</span>
+      <span class="exp">运行输出为 {'accuracy': 0.848}，约 0.85（SetFit 默认评估指标是准确率；书中正文将其表述为「F1 分数达到 0.84」）；第 4 章在完整数据的嵌入向量上训练逻辑回归也得到相同性能，充分体现标注少量样本的潜力。</span>
     </div>
   </div>
 
@@ -430,13 +430,13 @@
     <ul class="options">
       <li><span class="key">A</span>每类仅抽 16 个样本，二分类共 32 句</li>
       <li><span class="key">B</span>常规训练约需 8500 条影评，少样本缩减 3 个数量级</li>
-      <li><span class="key">C</span>仅 32 句训练，F1 即可达 0.84</li>
+      <li><span class="key">C</span>仅 32 句训练，accuracy 即可达约 0.85</li>
       <li><span class="key">D</span>少样本训练必须使用大规模 GPU 集群</li>
     </ul>
     <div class="qfoot"><button class="tbtn">显示答案</button></div>
     <div class="ans">
       <span class="lbl">答案：ABC</span>
-      <span class="exp">少样本的优势正是用极少样本（32 句）获得高 F1（0.84），并不需要大规模集群，故 D 错误。</span>
+      <span class="exp">少样本的优势正是用极少样本（32 句）获得约 0.85 的准确率（运行输出 accuracy=0.848），并不需要大规模集群，故 D 错误。</span>
     </div>
   </div>
 
@@ -735,7 +735,7 @@
         <b>阶段一 · 采样训练数据：</b>通过类内与类间选择生成句子对——同类句子两两组合为正例（如 16 个同类句子可生成 16×(16-1)/2=120 个正例对），跨类别采样生成负例对。<br>
         <b>阶段二 · 微调嵌入模型：</b>用生成的正例/负例句子对，以对比学习微调预训练 SentenceTransformer（all-mpnet-base-v2），把类别相关性提炼进嵌入向量。<br>
         <b>阶段三 · 训练分类器：</b>用微调后的模型为句子生成嵌入作为特征，在其上训练分类器；未指定分类头时默认使用逻辑回归。<br>
-        <b>句子对扩展：</b>默认系统为每个样本生成 20 个句子对组合，32 个样本得 20×32=640 个基础样本；由于正例对与负例对都需双向扩展，实际为 640×2=1280 个句子对。最终仅 32 个标注句子即获得 0.84 的 F1。
+        <b>句子对扩展：</b>默认系统为每个样本生成 20 个句子对组合，32 个样本得 20×32=640 个基础样本；由于正例对与负例对都需双向扩展，实际为 640×2=1280 个句子对。最终仅 32 个标注句子即获得约 0.85 的准确率（运行输出 accuracy=0.848；书中正文表述为 F1 0.84）。
       </span>
     </div>
   </div>

@@ -15,3 +15,8 @@ models/
 results/
 
 checkpoints/
+
+# 分类/NER 训练输出
+model/
+mlm/
+ner_model/
