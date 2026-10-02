@@ -808,21 +808,16 @@
     if (type === 'fill') {
       q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
     } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
       var opts = q.querySelectorAll('ul.options li');
-      var idx = 0;
       opts.forEach(function(li){
         var key = li.querySelector('.key').textContent.trim();
-        var isOk;
-        if (type === 'judge') {
-          isOk = (key === '√' && ans.textContent.indexOf('答案：√') > -1) ||
-                 (key === '×' && ans.textContent.indexOf('答案：×') > -1);
-        } else {
-          isOk = ans.textContent.indexOf('答案：' + key) > -1;
-        }
+        var isOk = correctKeys.indexOf(key) > -1;
         li.classList.remove('correct','wrong');
         if (isOk) li.classList.add('correct');
         else if (li.classList.contains('picked')) li.classList.add('wrong');
-        idx++;
       });
     }
   }
