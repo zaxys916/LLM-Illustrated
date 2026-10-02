@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第十一章 为分类任务微调表示模型 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>第十一章 · 为分类任务微调表示模型</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>在第 4 章中，我们使用预训练模型完成文本分类任务时，模型参数处于什么状态？</div>
+    <ul class="options">
+      <li><span class="key">A</span>完全保留原始参数，没有进行任何调整（冻结）</li>
+      <li><span class="key">B</span>只调整模型最底层</li>
+      <li><span class="key">C</span>所有参数都参与训练</li>
+      <li><span class="key">D</span>每次推理前随机重置参数</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">第 4 章完全保留了预训练模型的原始参数，没有进行任何调整；两种模型（特定任务模型与嵌入模型）均保持参数冻结的不可训练状态。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>11.1 节端到端微调架构中，反向传播的路径是怎样的？</div>
+    <ul class="options">
+      <li><span class="key">A</span>只更新分类头，不进入 BERT 模型</li>
+      <li><span class="key">B</span>从分类头开始，逐层贯穿整个 BERT 模型</li>
+      <li><span class="key">C</span>从输入嵌入层开始，向分类头传播</li>
+      <li><span class="key">D</span>只在注意力层之间循环传播</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">如图 11-2 所示，新方法实现了 BERT 模型与分类头的联合训练，反向传播从分类头开始，逐层贯穿整个 BERT 模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>本章微调使用的烂番茄数据集中，正面影评与负面影评各有多少条？</div>
+    <ul class="options">
+      <li><span class="key">A</span>1000 条</li>
+      <li><span class="key">B</span>5331 条</li>
+      <li><span class="key">C</span>8500 条</li>
+      <li><span class="key">D</span>14000 条</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">烂番茄数据集包含来自影评网站的 5331 条正面影评与 5331 条负面影评。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>11.1 节微调选用的基础模型是哪一个？</div>
+    <ul class="options">
+      <li><span class="key">A</span>bert-base-uncased（不区分大小写版）</li>
+      <li><span class="key">B</span>gpt2</li>
+      <li><span class="key">C</span>bert-base-cased（区分大小写版）</li>
+      <li><span class="key">D</span>all-mpnet-base-v2</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">示例选用 bert-base-cased，该模型已在英文维基百科和一个由未出版书籍组成的大型数据集上完成了预训练。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>DataCollatorWithPadding 工具的核心作用是什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>随机掩码 15% 的词元</li>
+      <li><span class="key">B</span>对批次中的序列进行填充，使其长度与最长序列一致</li>
+      <li><span class="key">C</span>删除文本中的停用词</li>
+      <li><span class="key">D</span>自动划分训练集与测试集</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">需要对输入文本进行填充以确保生成大小一致的表示，这正是 DataCollatorWithPadding 的核心作用；数据收集器还负责构建数据批次。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>端到端微调预训练 BERT 模型后，在烂番茄测试集上得到的 F1 分数是多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>0.63</li>
+      <li><span class="key">B</span>0.80</li>
+      <li><span class="key">C</span>0.84</li>
+      <li><span class="key">D</span>0.85</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：D</span>
+      <span class="exp">该模型 F1 分数为 0.85，明显高于第 4 章特定任务模型的 0.80，表明自行微调可能比直接使用预训练模型更具优势。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>bert-base-cased 模型由多少个编码器块构成？</div>
+    <ul class="options">
+      <li><span class="key">A</span>6 个</li>
+      <li><span class="key">B</span>10 个</li>
+      <li><span class="key">C</span>12 个（编号 0~11）</li>
+      <li><span class="key">D</span>24 个</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">该模型由 12 个（编号 0~11）编码器块构成，每个块均包含注意力头、前馈神经网络以及层归一化组件，基础架构上方还配置了独立的分类头。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>冻结 BERT 主体、仅允许分类头更新后，模型的 F1 分数是多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>0.63</li>
+      <li><span class="key">B</span>0.80</li>
+      <li><span class="key">C</span>0.84</li>
+      <li><span class="key">D</span>0.85</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">F1 仅为 0.63，相较于完整微调的 0.85 显著下降；但因为只训练分类头，训练速度有明显提升。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>仅冻结 BERT 前 10 个编码器块（保留后 2 块与分类头可训练）后，F1 分数是多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>0.63</li>
+      <li><span class="key">B</span>0.8</li>
+      <li><span class="key">C</span>0.85</li>
+      <li><span class="key">D</span>0.9</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">F1 为 0.8，比冻结全部层时的 0.63 显著提升；计算资源受限时，仅训练部分层仍能取得可接受效果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>图 11-7 的实验表明，只需训练前几个编码器块即可获得接近完整训练所有编码器块的性能？</div>
+    <ul class="options">
+      <li><span class="key">A</span>前 2 个</li>
+      <li><span class="key">B</span>前 5 个</li>
+      <li><span class="key">C</span>前 10 个</li>
+      <li><span class="key">D</span>必须全部 12 个</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">如图 11-7 垂直虚线所示，仅需训练前 5 个编码器块即可接近完整训练性能，训练更多模块带来的性能提升会快速趋于平缓。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>少样本文本分类所采用的 SetFit 框架，是基于什么架构构建的？</div>
+    <ul class="options">
+      <li><span class="key">A</span>纯卷积神经网络（CNN）</li>
+      <li><span class="key">B</span>sentence-transformers 架构</li>
+      <li><span class="key">C</span>TensorFlow Keras</li>
+      <li><span class="key">D</span>循环神经网络 RNN</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">SetFit 基于 sentence-transformers 架构构建，能够在训练过程中动态优化文本表示质量，少量样本即可媲美大规模数据微调的 BERT。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>少样本实验中，SetFit 从每个类别中抽取多少样本？二分类共使用多少句子？</div>
+    <ul class="options">
+      <li><span class="key">A</span>每类 5 个，共 10 句</li>
+      <li><span class="key">B</span>每类 16 个，共 32 句</li>
+      <li><span class="key">C</span>每类 100 个，共 200 句</li>
+      <li><span class="key">D</span>每类 1000 个，共 2000 句</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">每类抽取 16 个样本，二分类仅用 32 个句子；相较于常规训练约 8500 条影评，样本规模缩减了 3 个数量级。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>SetFit 微调时选用的预训练 SentenceTransformer 模型是哪一个？</div>
+    <ul class="options">
+      <li><span class="key">A</span>bert-base-cased</li>
+      <li><span class="key">B</span>all-mpnet-base-v2</li>
+      <li><span class="key">C</span>distilgpt2</li>
+      <li><span class="key">D</span>roberta-large</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">选用 sentence-transformers/all-mpnet-base-v2，该模型在 MTEB 排行榜中名列前茅。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>SetFitTrainer 在未明确定义分类头时，默认采用什么作为待训练的分类器？</div>
+    <ul class="options">
+      <li><span class="key">A</span>随机森林</li>
+      <li><span class="key">B</span>支持向量机</li>
+      <li><span class="key">C</span>逻辑回归模型</li>
+      <li><span class="key">D</span>K 近邻算法</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">SetFitTrainer 默认采用逻辑回归模型；如需自定义，可通过 use_differentiable_head 指定可微分类头。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>仅用 32 个标注句子完成 SetFit 训练后，测试集上的 F1 分数达到多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>0.63</li>
+      <li><span class="key">B</span>0.80</li>
+      <li><span class="key">C</span>0.84</li>
+      <li><span class="key">D</span>0.85</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">仅 32 个标注句子 F1 就达 0.84；第 4 章在完整数据的嵌入向量上训练逻辑回归也得到相同性能，充分体现标注少量样本的潜力。</span>
+    </div>
+  </div>
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">1.</span>SetFit 的核心算法流程包含下列哪些阶段？</div>
+    <ul class="options">
+      <li><span class="key">A</span>采样训练数据：类内选正例、类间选负例生成句子对</li>
+      <li><span class="key">B</span>微调嵌入模型：用句子对微调预训练嵌入模型</li>
+      <li><span class="key">C</span>训练分类器：在优化后的嵌入上构建并训练分类头</li>
+      <li><span class="key">D</span>从零开始在维基百科上预训练 BERT</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">SetFit 包含三个关键阶段：采样训练数据、微调嵌入模型、训练分类器；它是在预训练模型基础上微调，无须从零预训练，故 D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">2.</span>关于冻结层的实验，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>冻结除分类头外所有结构，训练速度明显提升</li>
+      <li><span class="key">B</span>冻结除分类头外所有结构，F1 降至 0.63</li>
+      <li><span class="key">C</span>仅冻结前 10 个编码器块，F1 为 0.8</li>
+      <li><span class="key">D</span>典型配置中可将冻结层与可训练层交替排列</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">四项均与书中实验一致：只训分类头速度快但 F1 仅 0.63；冻结前 10 块 F1 回到 0.8；冻结层与可训练层交替排列是典型配置。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">3.</span>关于 SetFit 少样本设置，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>每类仅抽 16 个样本，二分类共 32 句</li>
+      <li><span class="key">B</span>常规训练约需 8500 条影评，少样本缩减 3 个数量级</li>
+      <li><span class="key">C</span>仅 32 句训练，F1 即可达 0.84</li>
+      <li><span class="key">D</span>少样本训练必须使用大规模 GPU 集群</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">少样本的优势正是用极少样本（32 句）获得高 F1（0.84），并不需要大规模集群，故 D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">4.</span>关于继续预训练（continued pretraining），下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>在预训练与任务微调之间，增加特定领域数据上的 MLM 训练</li>
+      <li><span class="key">B</span>可更新子词表示，使其更好适应特定领域词汇</li>
+      <li><span class="key">C</span>从通用 BERT 到医学领域 BioBERT 是其典型例子</li>
+      <li><span class="key">D</span>必须丢弃原模型、从头预训练整个模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">继续预训练无须从头开始，只需在预训练好的 BERT 上用领域数据继续做 MLM，故 D 错误；BioBERT 再微调可用于药物分类。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">5.</span>关于掩码操作的两种方式，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>词元掩码随机掩码句子中 15% 的独立词元</li>
+      <li><span class="key">B</span>整词掩码对整个单词进行掩码</li>
+      <li><span class="key">C</span>整词掩码更具挑战性，促使模型学习更精细的语义表示</li>
+      <li><span class="key">D</span>整词掩码需要更长的收敛时间</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">词元掩码可能只掩码单词的部分字符；整词掩码预测整个单词更难、表示更精细但收敛更慢。本章示例为加快速度采用词元掩码。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">6.</span>英文版 CoNLL-2003 NER 数据集包含下列哪些实体类别？</div>
+    <ul class="options">
+      <li><span class="key">A</span>PER（人名）</li>
+      <li><span class="key">B</span>ORG（组织）</li>
+      <li><span class="key">C</span>LOC（地点）</li>
+      <li><span class="key">D</span>MISC（其他实体）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">CoNLL-2003 涵盖 PER、ORG、LOC、MISC 四类实体以及非实体 O，约含 14000 个训练样本。</span>
+    </div>
+  </div>
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">1.</span>实践证明，当具备充足数据时，微调通常能获得最佳性能。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这正是本章系统讲解 BERT 多种微调方法的出发点。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">2.</span>11.1 节架构将表示模型与分类头作为一个整体进行端到端微调。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">相较于嵌入模型方案，新方法把表示模型与分类头作为整体端到端微调，二者通过参数联动协同优化。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">3.</span>冻结 BERT 主体、只训练分类头时，训练速度会明显下降。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">仅对分类头训练相比微调整个模型会显著提升训练速度；代价是 F1 降到 0.63。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">4.</span>在计算资源受限的情况下，仅训练模型的部分层仍能取得可接受的效果。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">冻结前 10 个编码器块仍有 0.8 的 F1；虽通常优先训练尽可能多的层，但部分训练在资源受限时可接受。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">5.</span>SetFit 必须使用成千上万的标注样本，才能达到与全量微调 BERT 媲美的性能。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">SetFit 仅需少量标注样本（每类 16 个、共 32 句），F1 即达 0.84，可媲美大规模数据微调的 BERT。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">6.</span>默认情况下系统为每个样本生成 20 个句子对组合，32 个样本经双向扩展后共得到 1280 个句子对。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">20×32=640 个基础样本，由于每个正例对和负例对都需双向扩展，实际为 640×2=1280 个句子对。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">7.</span>SetFit 只能处理少样本分类，无法用于完全无标注的零样本分类。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">SetFit 也能零样本分类：通过标签名称生成合成样本（如标签 happy/sad 生成 The example is happy），再在这些样本上训练。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">8.</span>继续预训练过程中分词器参数也会更新，因此训练结束后必须重新保存分词器。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">分词器参数在训练中不会更新，训练完成后无须重复保存；继续预训练结束后只需完整保存更新后的模型。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">9.</span>NER 任务中模型对序列里的每个词元进行预测，而不是对整个文档输出一个类别。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">NER 是词元级细粒度分类，直接对序列中每个词元预测，不依赖词元嵌入的聚合或池化。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">10.</span>实体被拆成多个子词元时，首个词元带 B 标签、后续词元带 I 标签；[CLS] 与 [SEP] 词元被赋予 -100 的特殊标签。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这样可避免同一实体的子词元被误判为多个独立实体；-100 标签使特殊词元在损失计算中被忽略。</span>
+    </div>
+  </div>
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">1.</span>第 4 章使用预训练模型进行分类时，模型权重保持<span class="blank" data-ans="冻结">冻结</span>状态（不可训练）。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>冻结
+      <span class="exp">嵌入模型通过独立可训练的分类头实现情感预测，但预训练模型本身参数冻结。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">2.</span>11.1 节允许模型参数与分类头在训练过程中<span class="blank" data-ans="同步">同步</span>更新。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>同步
+      <span class="exp">二者不再是独立组件，而是通过参数联动协同优化，生成更具判别力的语义表征。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">3.</span>联合训练时，反向传播过程将从<span class="blank" data-ans="分类头">分类头</span>开始，逐层贯穿整个 BERT 模型。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>分类头
+      <span class="exp">如图 11-2 所示，梯度从分类头反向传播至 BERT 的每一层。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">4.</span>SetFit 框架基于<span class="blank" data-ans="sentence-transformers">sentence-transformers</span>架构构建，在训练中动态优化文本表示质量。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>sentence-transformers
+      <span class="exp">SetFit 在预训练 SentenceTransformer（如 all-mpnet-base-v2）基础上进行少样本微调。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">5.</span>SetFit 假设同一类别内的句子具有相似性并构建<span class="blank" data-ans="正">正</span>例对，不同类别中的句子则构成<span class="blank" data-ans="负">负</span>例对。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>正；负
+      <span class="exp">例如 16 个同类句子可创建 16×(16-1)/2=120 个正例对，跨类别采样生成负例对。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">6.</span>在预训练与任务微调之间，使用特定领域数据继续进行 MLM 训练的环节称为<span class="blank" data-ans="继续预训练">继续预训练</span>（continued pretraining）。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>继续预训练（continued pretraining）
+      <span class="exp">它能更新子词表示以适应领域词汇，如通用 BERT 到医学 BioBERT。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">7.</span>采用词元掩码时，系统会随机掩码句子中<span class="blank" data-ans="15">15</span>% 的独立词元。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>15
+      <span class="exp">这可能导致某个单词的部分字符被掩码；若要掩码整个单词需使用整词掩码。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">8.</span>NER 标签中，前缀 B 表示实体的<span class="blank" data-ans="起始">起始</span>，前缀 I 表示实体的<span class="blank" data-ans="内部">内部</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>起始；内部
+      <span class="exp">连续词元同属一个短语时，开头用 B、后续用 I，如 Dean(B-PER) Palmer(I-PER) 构成一个完整人名。</span>
+    </div>
+  </div>
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>先在输入框中作答，再对照参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">1.</span>对比 11.1 节端到端微调方案与第 4 章冻结方案的架构差异，并用 F1 结果说明微调的优势。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>第 4 章冻结方案：</b>预训练表示模型参数完全冻结、不可训练；嵌入模型仅通过独立可训练的分类头预测影评情感，特定任务模型也保持原始权重。<br>
+        <b>11.1 节端到端方案：</b>不再使用嵌入模型，而是直接微调预训练 BERT（bert-base-cased）并附加神经网络分类头；模型参数与分类头同步更新，反向传播从分类头开始逐层贯穿整个 BERT，表示模型与分类头作为整体协同优化。<br>
+        <b>结果对比：</b>第 4 章特定任务模型 F1 为 0.80，端到端微调后 F1 提升到 0.85，且整个训练仅需数分钟，说明数据充足时微调通常优于直接使用冻结的预训练模型。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">2.</span>简述本章冻结层实验的三种配置及对应 F1，并总结实验启示。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>配置一：</b>冻结除分类头外的所有结构（12 个编码器块与嵌入层全部冻结），只训练分类头；训练速度明显提升，但 F1 仅 0.63。<br>
+        <b>配置二：</b>仅冻结前 10 个编码器块，保留后 2 块与分类头可训练，使梯度仍能通过部分预训练模型反向传播；F1 回升到 0.8。<br>
+        <b>配置三：</b>不冻结任何层、完整微调整个模型；F1 为 0.85。图 11-7 进一步显示，仅训练前 5 个编码器块即可接近完整训练性能，训练更多模块的收益快速趋于平缓。<br>
+        <b>启示：</b>通常优先训练尽可能多的层以获得最佳性能；但计算资源受限时，训练部分层（或冻结层与可训练层交替排列）仍能取得可接受效果，应尝试不同冻结配置在性能与效率间寻找平衡。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">3.</span>简述 SetFit 在少样本场景下的三个核心阶段，并说明 32 个样本如何扩展为 1280 个句子对。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>阶段一 · 采样训练数据：</b>通过类内与类间选择生成句子对——同类句子两两组合为正例（如 16 个同类句子可生成 16×(16-1)/2=120 个正例对），跨类别采样生成负例对。<br>
+        <b>阶段二 · 微调嵌入模型：</b>用生成的正例/负例句子对，以对比学习微调预训练 SentenceTransformer（all-mpnet-base-v2），把类别相关性提炼进嵌入向量。<br>
+        <b>阶段三 · 训练分类器：</b>用微调后的模型为句子生成嵌入作为特征，在其上训练分类器；未指定分类头时默认使用逻辑回归。<br>
+        <b>句子对扩展：</b>默认系统为每个样本生成 20 个句子对组合，32 个样本得 20×32=640 个基础样本；由于正例对与负例对都需双向扩展，实际为 640×2=1280 个句子对。最终仅 32 个标注句子即获得 0.84 的 F1。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">4.</span>什么是继续预训练？结合 BioBERT 说明三步法流程，并比较词元掩码与整词掩码。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>继续预训练：</b>在「预训练 → 任务微调」两步之间增加的环节，即在预训练好的 BERT 基础上，继续使用特定领域数据实施掩码语言建模（MLM），更新子词表示以适应领域专业词汇；无须从头预训练整个模型。<br>
+        <b>三步法（BioBERT 例子）：</b>步骤 1，在通用语料上预训练得到通用 BERT；步骤 2，用医学领域数据做 MLM 继续预训练得到 BioBERT；步骤 3，在目标任务（如药物分类）上微调 BioBERT。它还能帮助模型适应特定组织的术语。<br>
+        <b>词元掩码 vs 整词掩码：</b>词元掩码随机掩码 15% 的独立词元，可能只掩码单词的部分字符，由 DataCollatorForLanguageModeling 实现、收敛较快；整词掩码掩码整个单词，预测更困难，促使模型学习更准确精细的语义表示、通常性能更好，但需要更长的收敛时间。<br>
+        <b>直观验证：</b>对 What a horrible [MASK]!，原始模型预测 idea/dream/day，继续预训练后预测 movie/film/mess，更贴合影评数据。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">5.</span>NER 中为什么要进行标签对齐？说明 BIO 标记的含义、子词元对齐规则、-100 特殊标签作用，以及所需的专用数据整理器。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>标签对齐的原因：</b>CoNLL-2003 的标注基于完整单词（is_split_into_words），而 BERT 分词器会把单词进一步拆成子词元（如 Maarten→Ma、##arte、##n，homer→home、##r），并加入 [CLS]、[SEP]；若简单沿用原标签，同一实体的多个子词元会被误判为多个独立实体，因此需要 align_labels 函数在分词时动态对齐标签。<br>
+        <b>BIO 含义：</b>B（Begin）标记实体起始，I（Inside）标记实体内部；如 Dean 标 B-PER、Palmer 标 I-PER，二者构成一个完整人名而非两个人名。实体类型有 PER、ORG、LOC、MISC，非实体为 O。<br>
+        <b>子词元对齐规则：</b>实体被拆分时，首个子词元保留 B 标签，其余子词元改为对应的 I 标签。<br>
+        <b>-100 标签：</b>给 [CLS]、[SEP] 等特殊词元赋予 -100，使其在损失计算中被忽略。<br>
+        <b>专用数据整理器：</b>词元分类使用 DataCollatorForTokenClassification（而非 DataCollatorWithPadding）；评估用 seqeval 在词元粒度计算指标，模型使用 AutoModelForTokenClassification 对每个词元分别预测。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">第十一章 为分类任务微调表示模型 · 自测练习　　共 44 题</footer>
+</div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
+      var opts = q.querySelectorAll('ul.options li');
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk = correctKeys.indexOf(key) > -1;
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){
+      b.classList.add('hide-ans');
+    });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
