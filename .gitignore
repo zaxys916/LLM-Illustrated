@@ -7,3 +7,11 @@
 models/
 
 .ipynb_checkpoints/
+
+# 嵌入模型训练输出
+*_embedding_model/
+
+# 训练评估结果
+results/
+
+checkpoints/
