@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第三章 LLM的内部机制 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>第三章 · LLM的内部机制</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>Transformer LLM 生成文本的方式是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>一次性并行生成所有输出文本</li>
+      <li><span class="key">B</span>一次生成一个词元，循环往复</li>
+      <li><span class="key">C</span>先生成整句再逐词修正</li>
+      <li><span class="key">D</span>按段落分块生成</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">Transformer LLM 每次只生成一个词元；生成的词元被追加到提示词末尾，更新后的提示词再次输入模型进行下一次前向传播，如此循环（见图 3-2、图 3-3）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>模型生成第一个词元后，为了生成第二个词元，输入如何变化？</div>
+    <ul class="options">
+      <li><span class="key">A</span>只把新词元单独送入模型</li>
+      <li><span class="key">B</span>把输出词元追加到输入提示词末尾，再整体进行前向传播</li>
+      <li><span class="key">C</span>丢弃原提示词，只用新词元</li>
+      <li><span class="key">D</span>随机挑选一段上下文重新输入</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">在生成当前词元后，输出词元会追加到输入提示词的末尾，从而调整下一次生成的输入提示词（见图 3-3），这就是自回归的逐词元生成过程。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>下列哪项<b>不属于</b>Transformer LLM 的三个主要组件？</div>
+    <ul class="options">
+      <li><span class="key">A</span>分词器</li>
+      <li><span class="key">B</span>一系列堆叠的 Transformer 块</li>
+      <li><span class="key">C</span>语言建模头（LM head）</li>
+      <li><span class="key">D</span>独立的检索数据库</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：D</span>
+      <span class="exp">Transformer LLM 的三个主要组件是：分词器（含词元词表）、一系列 Transformer 块、语言建模头（见图 3-4）。检索数据库不属于其组成部分。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>语言建模头（lm_head）的作用是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>把文本分解成词元</li>
+      <li><span class="key">B</span>把 Transformer 块的输出向量转换为词表中每个词元的概率分数</li>
+      <li><span class="key">C</span>缓存之前的计算结果</li>
+      <li><span class="key">D</span>为词元添加位置信息</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">语言建模头是一个简单的神经网络层，它接收最后一个 Transformer 块输出的向量，输出大小等于词表大小的向量，即每个词元的概率分数，用于选择下一个输出词元。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>每次都选择概率分数最高的词元的解码策略是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>随机采样</li>
+      <li><span class="key">B</span>束搜索</li>
+      <li><span class="key">C</span>贪心解码</li>
+      <li><span class="key">D</span>自监督解码</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">贪心解码就是每次都选择概率分数最高的词元；在 LLM 中把温度（temperature）参数设为零时发生的就是贪心解码。实践中按概率采样往往能产生更好的输出。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>lm_head_output 的形状为 [1, 5, 32064]，访问最后一个词元概率分数的正确索引是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>lm_head_output[0, 0]</li>
+      <li><span class="key">B</span>lm_head_output[0, -1]</li>
+      <li><span class="key">C</span>lm_head_output[-1, 0]</li>
+      <li><span class="key">D</span>lm_head_output[1, 5]</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">索引 0 用于批次维度（一批中的第一个输入），索引 -1 用于获取序列中最后一个词元的位置，得到全部 32064 个词元的概率分数列表。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>Transformer 模型一次可以处理的词元数量限制被称为？</div>
+    <ul class="options">
+      <li><span class="key">A</span>批次大小</li>
+      <li><span class="key">B</span>上下文长度</li>
+      <li><span class="key">C</span>词表大小</li>
+      <li><span class="key">D</span>嵌入维度</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">当前 Transformer 模型对一次可以处理的词元数量有限制，称为模型的上下文长度。4K 上下文长度的模型只能处理 4000 个词元，也就是只有 4000 条计算流。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>文本生成时只使用最后一条计算流的输出预测下一个词元，为什么仍需要所有计算流？</div>
+    <ul class="options">
+      <li><span class="key">A</span>为了让显存占用最大化</li>
+      <li><span class="key">B</span>因为每个 Transformer 块的注意力机制需要使用前序流的早期输出</li>
+      <li><span class="key">C</span>因为所有流的最终输出都要拼接后送入 lm_head</li>
+      <li><span class="key">D</span>其实不需要，只计算最后一条流即可</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">虽然只用最后一条流的最终输出向量预测下一个词元，但之前各流在每个 Transformer 块注意力机制中的早期输出是最终的流所必需的，它们为当前词元提供上下文信息。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>KV 缓存缓存的是哪些向量？</div>
+    <ul class="options">
+      <li><span class="key">A</span>词元嵌入向量</li>
+      <li><span class="key">B</span>注意力机制中的键（Key）和值（Value）向量</li>
+      <li><span class="key">C</span>语言建模头的输出分数</li>
+      <li><span class="key">D</span>位置嵌入向量</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">KV（键-值）缓存把之前词元在注意力机制中的键和值等特定向量缓存下来，生成新词元时无需重复计算之前的流，只需计算最后一条流，从而显著加快生成（见图 3-10）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>在 Hugging Face Transformers 中，禁用 KV 缓存的参数设置是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>cache=False</li>
+      <li><span class="key">B</span>use_cache=False</li>
+      <li><span class="key">C</span>kv_cache=off</li>
+      <li><span class="key">D</span>disable_cache=True</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">缓存默认是启用的，将 use_cache 设置为 False 可以禁用。书中示例里生成 100 个词元，启用缓存约 4.5 秒，禁用后约 21.8 秒，差异非常显著。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>Transformer 块由哪两个首尾相接的组件构成？</div>
+    <ul class="options">
+      <li><span class="key">A</span>分词器和语言建模头</li>
+      <li><span class="key">B</span>自注意力层和前馈神经网络层</li>
+      <li><span class="key">C</span>卷积层和池化层</li>
+      <li><span class="key">D</span>编码器和解码器</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">Transformer 块由自注意力层（主要负责整合来自其他输入词元和位置的相关信息）和前馈神经网络层（包含模型的主要处理能力）首尾相接构成（见图 3-12）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>输入"The Shawshank"后模型能续写出"Redemption"，这类事实性知识主要存储在哪？</div>
+    <ul class="options">
+      <li><span class="key">A</span>分词器的词表中</li>
+      <li><span class="key">B</span>注意力层的查询矩阵中</li>
+      <li><span class="key">C</span>前馈神经网络层（分布在所有模型层中）</li>
+      <li><span class="key">D</span>KV 缓存中</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">前馈神经网络层（分布在所有模型层中）承担了模型大部分的记忆和插值工作：模型在大规模文本上训练后，把完成任务所需的信息存储在 FFN 中，并能利用相同机制在数据点之间插值实现泛化（见图 3-13）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>注意力机制第一步"相关性评分"是如何计算的？</div>
+    <ul class="options">
+      <li><span class="key">A</span>将当前位置的查询向量与键矩阵相乘，再通过 softmax 归一化</li>
+      <li><span class="key">B</span>将值矩阵与键矩阵逐元素相加</li>
+      <li><span class="key">C</span>将查询矩阵与值矩阵相乘后取平均</li>
+      <li><span class="key">D</span>用余弦相似度比较词元嵌入</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">相关性评分通过将当前位置的查询向量与键矩阵相乘实现，产生衡量前序每个词元相关性的分数，随后用 softmax 归一化使分数之和为 1（见图 3-20）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>多查询注意力（MQA）通过什么方式实现优化？</div>
+    <ul class="options">
+      <li><span class="key">A</span>在所有注意力头之间共享键矩阵和值矩阵，每个头只保留独特的查询矩阵</li>
+      <li><span class="key">B</span>让每个头使用多组键值矩阵</li>
+      <li><span class="key">C</span>删除所有注意力头</li>
+      <li><span class="key">D</span>把注意力计算移到 CPU 上</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">多头注意力中每个头有独立的查询、键、值矩阵；多查询注意力让所有头共享键矩阵和值矩阵，只保留各自独特的查询矩阵，通过减小矩阵规模提升推理可扩展性（见图 3-27）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>旋转位置嵌入（RoPE）在前向传播的哪个环节加入位置信息？</div>
+    <ul class="options">
+      <li><span class="key">A</span>前向传播开始时的嵌入阶段</li>
+      <li><span class="key">B</span>语言建模头的概率计算中</li>
+      <li><span class="key">C</span>注意力步骤中，在查询与键相乘做相关性评分之前混入查询矩阵和键矩阵</li>
+      <li><span class="key">D</span>输出词元解码时</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">与在前向传播开始时添加的静态绝对嵌入不同，RoPE 在注意力步骤中把位置信息特意混合到查询矩阵和键矩阵中，发生在查询向量与键矩阵相乘进行相关性评分之前（见图 3-32、图 3-33）。</span>
+    </div>
+  </div>
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">1.</span>关于 Transformer LLM 的自回归逐词元生成，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型一次前向传播只用于生成一个词元</li>
+      <li><span class="key">B</span>生成的词元会被追加到提示词末尾</li>
+      <li><span class="key">C</span>更新后的提示词会再次输入模型进行下一次前向传播</li>
+      <li><span class="key">D</span>所有输出词元在第一次前向传播中同时产生</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">文本生成是循环执行"前向传播 → 选出词元 → 追加到提示词 → 再次前向传播"的过程；D 错误，词元是逐个生成的，并非一次同时产生。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">2.</span>打印 Phi-3 模型结构（print(model)）后，可以观察到哪些信息？</div>
+    <ul class="options">
+      <li><span class="key">A</span>堆叠了 32 个 Phi3DecoderLayer 类型的块</li>
+      <li><span class="key">B</span>嵌入矩阵 embed_tokens 有 32064 个词元</li>
+      <li><span class="key">C</span>每个词元的向量大小为 3072</li>
+      <li><span class="key">D</span>lm_head 输出向量大小为 3072</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">Phi3Model 内 embed_tokens 的维度是 32064×3072（32064 个词元，每个 3072 维），包含 32 个 Phi3DecoderLayer；lm_head 接收 3072 维向量、输出等于词元数量的 32064 维向量，D 说反了。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">3.</span>关于注意力机制的两个主要步骤，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>第一步是对当前处理的词元与之前输入词元进行相关性评分</li>
+      <li><span class="key">B</span>第二步是利用这些分数将不同位置的信息组合成单一输出向量</li>
+      <li><span class="key">C</span>评分通过查询向量与键矩阵的交互完成</li>
+      <li><span class="key">D</span>信息组合时把所有值向量直接相加，与相关性分数无关</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">注意力分两步：先由查询向量和键矩阵相乘（softmax 归一化）得到相关性分数，再用每个词元的值向量乘以该词元的分数后相加，得到输出（见图 3-21）；D 错误，组合必须以分数加权。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">4.</span>关于并行词元处理与计算流，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>每个输入词元都流经自己的计算流（处理路径）</li>
+      <li><span class="key">B</span>计算流的数量就是模型的上下文长度</li>
+      <li><span class="key">C</span>每条流以一个输入向量开始，输出一个大小相同的结果向量</li>
+      <li><span class="key">D</span>输入向量与输出向量的大小可以任意不同</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">每个词元流经独立计算流，流数量即上下文长度；每条流从输入向量（嵌入+位置信息）开始，产出大小相同的输出向量，该大小通常称为模型维度（见图 3-9），D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">5.</span>关于分组查询注意力（GQA），下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>它建立在多查询注意力（MQA）的基础之上</li>
+      <li><span class="key">B</span>每个分组的注意力头共享各自的键矩阵和值矩阵</li>
+      <li><span class="key">C</span>Llama 2 和 Llama 3 等模型使用了 GQA</li>
+      <li><span class="key">D</span>GQA 中键、值矩阵的数量与注意力头数量相同</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">GQA 在 MQA 基础上，允许使用多于一个但少于注意力头数量的键、值矩阵，分组共享；它在牺牲一些 MQA 效率的同时换取质量的大幅提升，被 Llama 2/3 采用；D 错误，若数量与头数相同就退回多头注意力了。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">6.</span>相比原始 Transformer 论文，2024 年的 Transformer 块（如 Llama 3）有哪些改进？</div>
+    <ul class="options">
+      <li><span class="key">A</span>归一化移到自注意力层和前馈神经网络层之前（预归一化）</li>
+      <li><span class="key">B</span>使用比 LayerNorm 更简单高效的 RMSNorm</li>
+      <li><span class="key">C</span>激活函数采用 SwiGLU 等新变体替代 ReLU</li>
+      <li><span class="key">D</span>完全移除了注意力机制</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">新版 Transformer 块保留残差连接与层归一化，但归一化前置（据称可减少训练时间）、用 RMSNorm 替代 LayerNorm、用 SwiGLU 等替代 ReLU，并配合 GQA 和 RoPE 优化注意力；注意力机制仍是核心组件，D 错误。</span>
+    </div>
+  </div>
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">1.</span>Transformer LLM 会对整个输出文本一次性完成生成。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">模型一次只生成一个词元，生成后追加到提示词再进行下一次前向传播，循环往复直到完成。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">2.</span>贪心解码总是选择概率分数最高的词元作为输出。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">贪心解码每次都选概率分数最高的词元，等价于温度参数设为零；实践中引入随机性的采样策略往往效果更好。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">3.</span>一个 4K 上下文长度的模型一次最多可以处理 5000 个词元。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">4K 上下文长度意味着只能处理 4000 个词元，即只有 4000 条计算流，5000 超出了限制。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">4.</span>解码器 Transformer 块的注意力可以关注序列中后续位置的词元。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">构成大多数文本生成模型的解码器 Transformer 块具有自回归特性，只能关注前序词元；BERT 这类双向模型才可以关注两个方向。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">5.</span>GPT-3 在所有 Transformer 块中都使用稀疏注意力。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">如果模型只能看到少量前序词元，生成质量会大幅下降，因此 GPT-3 在全注意力和稀疏注意力的 Transformer 块之间交替使用，而非全部使用稀疏注意力。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">6.</span>Flash Attention 通过优化 GPU 共享内存（SRAM）和高带宽内存（HBM）之间的数据加载和迁移来加速注意力计算。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">Flash Attention 是广受欢迎的精确注意力加速方法，从 IO 角度优化 SRAM 与 HBM 之间的数据加载和迁移，可显著提升 GPU 上训练和推理速度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">7.</span>RMSNorm 比原始 Transformer 中使用的 LayerNorm 更简单、更高效。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">现代模型（如 Llama 系列）用 RMSNorm 替代 LayerNorm，它更简单、更高效，这也是 Transformer 块的重要改进之一。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">8.</span>旋转位置嵌入（RoPE）只能编码词元的绝对位置信息。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">RoPE 是一种以捕获绝对和相对词元位置信息的方式来编码位置的方法，其思想基于嵌入空间中旋转的向量。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">9.</span>打包（packing）是指将多个短训练文档高效组织到同一个训练上下文中。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">训练集中很多文档长度远小于上下文长度，为短句分配整个 4K 上下文很低效，因此训练时会把多个文档一同打包进每个批次的上下文，同时尽量减少末尾填充（见图 3-31）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">10.</span>在 Hugging Face Transformers 中，KV 缓存默认是关闭的，需要手动开启。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">缓存默认是启用的；如需禁用，才将 use_cache 设置为 False。禁用后生成同样 100 个词元的时间从约 4.5 秒增加到约 21.8 秒。</span>
+    </div>
+  </div>
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">1.</span>使用早期预测来进行后续预测的模型（例如用生成的第一个词元来生成第二个词元）被称为<span class="blank" data-ans="自回归">自回归</span>模型。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>自回归（autoregressive）
+      <span class="exp">这是机器学习中描述此类模型的专门术语，LLM 逐词元生成文本的底层过程正是自回归的。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">2.</span>在 LLM 中把温度（temperature）参数设为<span class="blank" data-ans="零（0）">零（0）</span>时，发生的就是贪心解码。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>零（0）
+      <span class="exp">温度为零时模型每次都选择概率分数最高的词元，即贪心解码；温度概念将在第 6 章详细讨论。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">3.</span>lm_head_output 的形状为 [1, 5, 32064]，其中 32064 对应模型的<span class="blank" data-ans="词表">词表</span>大小。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>词表
+      <span class="exp">语言建模头输出的每个向量包含词表中全部 32064 个词元的概率分数；批次维度为 1，序列长度为 5。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">4.</span>为了增强注意力能力，注意力机制被复制多份并行执行，这些并行的注意力执行过程被称为注意力<span class="blank" data-ans="头">头</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>头（attention head）
+      <span class="exp">多个注意力头并行运行提高了模型对输入序列中复杂模式的建模能力，使其能同时关注不同的模式，各头输出最后被聚合为层的输出（见图 3-17）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">5.</span>分组查询注意力（GQA）建立在<span class="blank" data-ans="多查询">多查询</span>注意力（MQA）的基础之上。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>多查询（multi-query）
+      <span class="exp">MQA 在所有头之间共享键、值矩阵；GQA 进一步折中，允许分组共享键、值矩阵，在效率与质量之间取得平衡。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">6.</span>新版 Transformer 块中，归一化采用比 LayerNorm 更简单高效的<span class="blank" data-ans="RMSNorm">RMSNorm</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>RMSNorm
+      <span class="exp">参见论文"Root Mean Square Layer Normalization"；归一化还被移到注意力层和 FFN 层之前（预归一化），据称可减少所需训练时间。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">7.</span>现代模型常用 SwiGLU 等新激活函数变体，替代原始 Transformer 中的<span class="blank" data-ans="ReLU">ReLU</span>激活函数。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>ReLU
+      <span class="exp">参见论文"GLU Variants Improve Transformer"；SwiGLU 等变体在当前 LLM 中更为常见。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">8.</span>RoPE 把位置信息混入查询矩阵和键矩阵，发生在将查询向量与键矩阵相乘进行<span class="blank" data-ans="相关性">相关性</span>评分之前。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：</span>相关性
+      <span class="exp">旋转位置嵌入在注意力步骤中添加（而非前向传播开始时），在相关性评分之前把位置信息特意混合到查询和键中（见图 3-33）。</span>
+    </div>
+  </div>
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>先在输入框中作答，再对照参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">1.</span>简述 Transformer LLM 从接收提示词到持续生成文本的完整过程。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>输入端：</b>提示词先经分词器分解为词元并转换为词元 ID，模型取出对应的词元嵌入向量（加上位置信息），每个词元流入自己的计算流。<br>
+        <b>处理：</b>计算依次经过堆叠的 Transformer 块（每块含自注意力层和前馈神经网络层），最后一个块的输出向量交给语言建模头。<br>
+        <b>输出端：</b>语言建模头对词表中每个词元输出概率分数，解码策略（如按概率采样或贪心解码）从中选出下一个词元。<br>
+        <b>循环：</b>生成的词元被追加到提示词末尾，更新后的提示词再次输入模型进行下一次前向传播，如此自回归地逐词元生成，直到结束。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">2.</span>为什么 KV 缓存能显著加速文本生成？请结合原理和书中的计时实验说明。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>原理：</b>生成第二个词元时，朴素做法是把新词元追加后对整个序列重新前向传播，之前的流会被重复计算。KV 缓存把之前词元在注意力机制中的键和值等特定向量缓存下来，这样生成新词元时只需计算最后一条活跃的计算流，避免重复计算。<br>
+        <b>实验：</b>书中在 T4 GPU 上生成 100 个词元，启用缓存约 4.5 秒，禁用缓存（use_cache=False）约 21.8 秒，差异非常显著。<br>
+        <b>延伸：</b>这也是 LLM API 在生成过程中流式输出词元的原因——让等待输出的用户更早看到内容。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">3.</span>注意力机制包含哪两个主要步骤？分别如何实现？</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>第一步·相关性评分：</b>将当前位置的查询向量与键矩阵相乘，得到衡量前序每个词元相关性的分数，再通过 softmax 归一化使分数之和为 1。<br>
+        <b>第二步·信息组合：</b>用每个词元对应的值向量乘以该词元的相关性分数，然后将结果向量相加，得到融合了上下文信息的输出向量。<br>
+        <b>意义：</b>注意力把上下文中的相关信息整合进当前词元的表示，例如"The dog chased the squirrel because it"中判断 it 的指代对象（见图 3-14、图 3-20、图 3-21）。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">4.</span>比较多头注意力、多查询注意力和分组查询注意力的区别与权衡。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>多头注意力（原始）：</b>每个注意力头都有独立的一组查询、键、值矩阵，建模能力最强，但矩阵规模大、推理开销高（见图 3-26）。<br>
+        <b>多查询注意力（MQA）：</b>所有头共享同一组键矩阵和值矩阵，只保留各自独特的查询矩阵；通过减小矩阵规模大幅提高推理可扩展性，但随着模型规模增长可能带来过大的性能损失。<br>
+        <b>分组查询注意力（GQA）：</b>在 MQA 基础上允许使用多于一个但少于头数的键、值矩阵，分组共享；牺牲一些 MQA 的效率换取质量的大幅提升，被 Llama 2、Llama 3 等模型采用。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">5.</span>什么是旋转位置嵌入（RoPE）？相比静态绝对位置嵌入有什么优势？它在前向传播中的什么位置生效？</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>是什么：</b>RoPE（rotary position embedding）是一种基于嵌入空间中旋转向量的位置编码方法。<br>
+        <b>优势：</b>静态绝对位置嵌入（第一个词元标记为位置 1、第二个为位置 2，可为静态或可学习）在扩展到大规模和长上下文时面临挑战，如打包场景中文档 50 从位置 50 开始会误导模型；RoPE 能同时捕获绝对和相对词元位置信息，更适应打包等实践需求。<br>
+        <b>生效位置：</b>与在前向传播开始时添加的静态绝对嵌入不同，RoPE 在注意力步骤中生效——把位置信息特意混合到查询矩阵和键矩阵中，发生在查询与键相乘进行相关性评分之前（见图 3-32、图 3-33）。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">
+    第三章 · LLM的内部机制 · 测试题　|　《图解大模型》学习笔记
+  </footer>
+</div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
+      var opts = q.querySelectorAll('ul.options li');
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk = correctKeys.indexOf(key) > -1;
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){ b.classList.add('hide-ans'); });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
