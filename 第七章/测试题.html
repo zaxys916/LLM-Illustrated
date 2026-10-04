@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第七章 高级文本生成技术与工具 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style></head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>第七章 · 高级文本生成技术与工具</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>LangChain 框架的核心设计思想是什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>用链式架构将提示词模板、LLM、记忆等组件顺序组合</li>
+      <li><span class="key">B</span>提供一个更大的预训练模型</li>
+      <li><span class="key">C</span>自动微调所有开源模型</li>
+      <li><span class="key">D</span>替代数据库完成数据存储</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">LangChain 的名称即源自其核心方法"链"：组件独立可复用，链式组合后发挥真正威力，多条链还能再相互配合。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>本章 LlamaCpp 加载的本地模型是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Phi-3-mini-4k-instruct q4 量化 GGUF 模型</li>
+      <li><span class="key">B</span>GPT-4 API</li>
+      <li><span class="key">C</span>BERT-base</li>
+      <li><span class="key">D</span>gte-small 嵌入模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">llm = LlamaCpp(model_path="../models/Phi-3-mini-4k-instruct-q4.gguf", n_gpu_layers=-1, max_tokens=500, n_ctx=2048, seed=42)，全程本地推理（原书为 fp16 版，本环境使用同系列 q4 量化版）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>LlamaCpp 初始化参数 n_gpu_layers=-1 的含义是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>禁用 GPU</li>
+      <li><span class="key">B</span>将模型的所有层都卸载到 GPU 上加速</li>
+      <li><span class="key">C</span>只加载一半的层</li>
+      <li><span class="key">D</span>使用 CPU 的 1 个核心</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">-1 表示把全部层放入 GPU；这是 llama.cpp 加速本地推理的关键参数。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>PromptTemplate 中 input_variables 的作用是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>声明模板中需要填充的变量，调用时自动替换</li>
+      <li><span class="key">B</span>控制生成温度</li>
+      <li><span class="key">C</span>指定输出语言</li>
+      <li><span class="key">D</span>设置随机种子</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">模板中含 {product} 等占位符，input_variables 声明变量名，链式调用时自动填入实际值生成完整提示词。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>LCEL 写法 basic_chain = prompt | llm 中的竖线表示什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>逻辑或运算</li>
+      <li><span class="key">B</span>将前一个组件的输出作为后一个组件的输入，顺序传递</li>
+      <li><span class="key">C</span>正则分隔符</li>
+      <li><span class="key">D</span>并行执行两个组件</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">竖线（pipe）是 LangChain 表达式语言的链式连接符：prompt 组装好提示词后传给 llm 生成回答。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>未加记忆组件时，链对 "What is my name?" 的回答是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>"Your name is Maarten."</li>
+      <li><span class="key">B</span>"I'm afraid I can't help with that."</li>
+      <li><span class="key">C</span>"Your name is John."</li>
+      <li><span class="key">D</span>正确回答了名字</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">LLM 本身无状态：cell 92 中模型回答 "I'm afraid I can't help with that."，说明上一轮的自称没有被保留。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>ConversationBufferMemory 的记忆策略是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>只保留最近一轮</li>
+      <li><span class="key">B</span>把全部对话历史原样保存并注入提示词</li>
+      <li><span class="key">C</span>用另一个模型改写摘要</li>
+      <li><span class="key">D</span>随机丢弃部分对话</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">BufferMemory 完整保留所有 Human/AI 交替内容，信息无损但 token 占用随轮次线性增长。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>加上 ConversationBufferMemory 后再问 "What is my name?"，模型回答？</div>
+    <ul class="options">
+      <li><span class="key">A</span>"Your name is Maarten."</li>
+      <li><span class="key">B</span>"I can't help with that."</li>
+      <li><span class="key">C</span>"Your name is AI."</li>
+      <li><span class="key">D</span>答非所问，说不知道年龄</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">cell 113：记忆中保留了 "Human: Hi! My name is Maarten…"，模型正确回答 "Your name is Maarten."。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>ConversationBufferWindowMemory(k=2) 的记忆策略是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>保留全部对话</li>
+      <li><span class="key">B</span>只保留最早的两轮对话</li>
+      <li><span class="key">C</span>只保留最近的两轮对话</li>
+      <li><span class="key">D</span>按关键词筛选对话</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">窗口记忆只把最近 k=2 轮对话注入提示词，较早的内容被"滑出"窗口，token 占用可控。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>在窗口记忆（k=2）实验中，模型无法回答 "What is my age?" 的直接原因是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型不具备计算能力</li>
+      <li><span class="key">B</span>含年龄的首轮对话已滑出最近 2 轮的窗口</li>
+      <li><span class="key">C</span>提示词模板写错了</li>
+      <li><span class="key">D</span>LLM 拒绝透露他人隐私</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">cell 128：chat_history 只剩最后两轮（3+3 与 问名字），"33 years old" 的信息已被窗口丢弃，模型只能回答没有相关信息。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>ConversationSummaryMemory 的记忆策略是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>原样保存全部对话</li>
+      <li><span class="key">B</span>只存最后一轮</li>
+      <li><span class="key">C</span>调用 LLM 将对话持续压缩成摘要</li>
+      <li><span class="key">D</span>把对话转为向量存储</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">SummaryMemory 用 LLM（本章用同一个 llm）将历史对话不断改写为摘要，历史长度被压缩，token 占用近似恒定。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>在摘要记忆实验中问 "What was the first question I asked?"，模型能回答的依据是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型天生记得所有历史</li>
+      <li><span class="key">B</span>摘要中保留了"首问是 1+1 算术题"的信息</li>
+      <li><span class="key">C</span>窗口里恰好还有第一轮</li>
+      <li><span class="key">D</span>联网检索到了对话记录</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">cell 147/150：摘要 chat_history 写明 "asked the AI about a basic arithmetic question (1 + 1)"，模型据此答出第一问是 1+1。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>ReAct 提示格式中，"Action" 一行表示什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型的最终答案</li>
+      <li><span class="key">B</span>模型决定调用的工具名称</li>
+      <li><span class="key">C</span>用户的原始问题</li>
+      <li><span class="key">D</span>工具的返回结果</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">ReAct 循环：Question → Thought → Action（选工具）→ Action Input（工具入参）→ Observation（工具结果）→ … → Final Answer。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>ReAct 流程中的 "Observation" 内容来自哪里？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型自由生成</li>
+      <li><span class="key">B</span>上一步所调用工具执行后返回的结果</li>
+      <li><span class="key">C</span>用户手工输入</li>
+      <li><span class="key">D</span>模型训练数据</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">Observation 是工具（如搜索引擎、计算器）的真实执行结果，模型基于它继续推理，形成"思考-行动-观察"循环。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>随着对话轮数增多，token 消耗增长最快、最不可控的记忆方案是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>ConversationBufferMemory</li>
+      <li><span class="key">B</span>ConversationBufferWindowMemory</li>
+      <li><span class="key">C</span>ConversationSummaryMemory</li>
+      <li><span class="key">D</span>不使用记忆</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">BufferMemory 全量保留历史，每轮都注入完整对话，token 随轮次线性膨胀；窗口与摘要方案则分别以丢信息/压缩信息为代价换取可控开销。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">16.</span>LangChain 链式架构可以串联哪些组件？</div>
+    <ul class="options">
+      <li><span class="key">A</span>PromptTemplate 提示词模板</li>
+      <li><span class="key">B</span>LLM（如 LlamaCpp / ChatOpenAI）</li>
+      <li><span class="key">C</span>Memory 记忆组件</li>
+      <li><span class="key">D</span>输出解析器与工具</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">链的核心思想就是模块化组件的灵活组合：模板、模型、记忆、解析器、工具都能参与链式编排。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">17.</span>本章 LlamaCpp 的初始化配置，正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>model_path 指向本地 Phi-3 q4 GGUF 文件</li>
+      <li><span class="key">B</span>n_gpu_layers=-1，全部层上 GPU</li>
+      <li><span class="key">C</span>max_tokens=500，限制单次生成长度</li>
+      <li><span class="key">D</span>n_ctx=2048，上下文窗口 2048 词元</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">四项均为 cell 25 的实际配置，另设 seed=42 提升可复现性。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">18.</span>关于"标题→角色→故事"的三链式架构，正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>每条链用 LLMChain 封装并通过 output_key 命名输出</li>
+      <li><span class="key">B</span>后级链的模板可以引用前级链的输出变量</li>
+      <li><span class="key">C</span>三链用 | 串联后一次 invoke 即可级联执行</li>
+      <li><span class="key">D</span>三条链必须并行执行才有效</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">title/character/story 三条链按数据流依赖级联（cell 85 运行输出同时含 summary、title、character 等键）；并行与依赖级联相矛盾，D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">19.</span>对比三种记忆组件，下列说法正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>BufferMemory 无损保存全部对话</li>
+      <li><span class="key">B</span>WindowMemory 只保留最近 k 轮，较早信息会丢失</li>
+      <li><span class="key">C</span>SummaryMemory 用 LLM 把历史压缩为摘要</li>
+      <li><span class="key">D</span>三者的 token 占用随轮次增长的速度相同</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">三者是"信息保真 ↔ token 开销"的不同折中：Buffer 全存增长最快，Window 恒定但丢信息，Summary 压缩信息且增长缓慢；D 错误。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">20.</span>ReAct 提示格式中包含哪些循环步骤？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Thought：思考下一步该做什么</li>
+      <li><span class="key">B</span>Action 与 Action Input：选择工具并给出入参</li>
+      <li><span class="key">C</span>Observation：获取工具返回结果</li>
+      <li><span class="key">D</span>Final Answer：给出最终答案</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">完整循环为 Question → (Thought → Action → Action Input → Observation)* → Final Answer，思考与工具调用可交替多轮。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">21.</span>为对话系统选型记忆机制时，应考虑哪些因素？</div>
+    <ul class="options">
+      <li><span class="key">A</span>上下文窗口大小与 token 成本</li>
+      <li><span class="key">B</span>任务对早期信息的依赖程度</li>
+      <li><span class="key">C</span>摘要改写可能引入的信息偏差</li>
+      <li><span class="key">D</span>对话轮数的预期长度</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">短对话可放心用 Buffer；长对话选 Window 或 Summary；摘要会改写细节（如年龄滑出窗口的教训），需按任务权衡。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">22.</span>LangChain 的链式架构把提示词模板、LLM 等模块化组件按顺序连接起来。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">如图 7-3 所示，单链架构将模块化组件（模板/记忆等）与 LLM 连接，链与链还能再组合。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">23.</span>LLM 默认会自动记住上一轮对话的内容，无须任何额外组件。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">LLM 调用本身无状态，cell 92 中模型对"What is my name?"一问三不知，必须靠记忆组件注入历史。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">24.</span>LLMChain 可以设置 output_key，让输出供下游链引用。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">title/character/story 三条链分别设置 output_key，是三链级联的数据流基础。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">25.</span>ConversationBufferWindowMemory(k=2) 保存的是最早的两轮对话。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">窗口记忆保留的是最近 k=2 轮；最早的轮次反而最先被丢弃（年龄即因此失忆）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">26.</span>ConversationSummaryMemory 的历史长度随对话轮次线性增长。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">它持续用 LLM 把旧内容压缩进摘要，增长远慢于 BufferMemory 的线性膨胀。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">27.</span>ReAct 中 "Final Answer" 表示模型结束工具调用循环并给出最终答案。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">模型判断信息足够后输出 Final Answer，循环终止。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">28.</span>DuckDuckGoSearchResults 是检索本地文档的工具。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">它是网络搜索引擎工具，用于查询互联网上的实时信息（如 MacBook 价格）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">29.</span>cell 92（无记忆）与 cell 113（有记忆）的对照说明记忆组件直接决定多轮对话的连贯性。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">同一问题，无记忆时"无法帮忙"，有 Buffer 记忆后准确答出名字，这是记忆价值的直接证据。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">30.</span>在级联链中，后级链的提示词模板可以引用前级链输出的变量。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">character 链的模板同时引用 {summary} 与 {title}，story 链再引用 {character}，逐级传递。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">31.</span>注入记忆后的提示词仍需遵循 Phi-3 的特殊标记格式（<|user|>/<|end|> 等）。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">记忆内容最终被拼进提示词模板，仍按 Phi-3 的对话标记渲染后送入模型。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">32.</span>LCEL 中使用竖线<span class="blank" data-ans="|">|</span>将多个组件顺序连接成链。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：|</span>
+      <span class="exp">如 basic_chain = prompt | llm，数据沿管道从左向右流动。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">33.</span>标题链为摘要 "a girl that lost her mother" 生成的标题是<span class="blank" data-ans="Echoes of a Mother's Absence">Echoes of a Mother's Absence</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：Echoes of a Mother's Absence</span>
+      <span class="exp">cell 75 运行输出：title 为 "Echoes of a Mother's Absence"。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">34.</span>本章记忆组件统一使用 memory_key=<span class="blank" data-ans="chat_history">chat_history</span> 注入对话历史。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：chat_history</span>
+      <span class="exp">三种记忆均以 chat_history 为键，与提示词模板中的 {chat_history} 占位符对应。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">35.</span>ConversationBufferWindowMemory(k=2) 只保留最近<span class="blank" data-ans="2">2</span>轮对话。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：2</span>
+      <span class="exp">窗口外内容被丢弃，因此模型遗忘了最初自我介绍中的年龄。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">36.</span>没有记忆时，模型对 "What is my name?" 的回答是 "I'm afraid I can't help with that."，说明 LLM 调用本身是<span class="blank" data-ans="无状态">无状态</span>的。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：无状态</span>
+      <span class="exp">每次调用相互独立，历史必须显式注入提示词，模型才能"记住"。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">37.</span>ConversationSummaryMemory 使用<span class="blank" data-ans="LLM">LLM</span>将历史对话持续改写为摘要。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：LLM</span>
+      <span class="exp">本章直接复用同一个 llama.cpp 模型执行摘要改写。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">38.</span>ReAct 格式中，模型选择要调用的工具的步骤名是<span class="blank" data-ans="Action">Action</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：Action</span>
+      <span class="exp">Action 给出工具名，Action Input 给出入参，Observation 承接工具结果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">39.</span>窗口记忆实验中，模型能答出名字却答不出<span class="blank" data-ans="年龄">年龄</span>，因为该信息已滑出 k=2 窗口。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：年龄</span>
+      <span class="exp">cell 128：模型回答没有相关信息，首轮对话中的 "33 years old" 已被窗口丢弃。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>点击「显示答案」查看参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">40.</span>结合 cell 90/92 与 cell 110/113 的运行结果，说明 LLM 的无状态特性与记忆组件的必要性。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>无记忆组：</b>模型能答对 "1 + 1 = 2"（cell 90），但紧接着问 "What is my name?" 时回答 "I'm afraid I can't help with that."（cell 92）——上一轮的自称完全丢失；
+        <b>有记忆组：</b>加入 ConversationBufferMemory 后，chat_history 中保留 "Human: Hi! My name is Maarten…"，再问名字即正确回答 "Your name is Maarten."（cell 113）；
+        <b>结论：</b>LLM 每次调用相互独立，多轮对话的"记忆"必须由外部组件把历史显式注入提示词实现。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">41.</span>对比 ConversationBufferMemory、ConversationBufferWindowMemory 与 ConversationSummaryMemory 的原理、代价与适用场景。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>BufferMemory：</b>原样保存全部 Human/AI 交替内容并整段注入提示词——信息零损失，但 token 随轮次线性膨胀，适合短对话；
+        <b>WindowMemory(k=2)：</b>只注入最近 2 轮——token 恒定可控，但更早的信息被丢弃：实验中模型能答出名字（近 2 轮内），却答不出年龄（首轮已滑出，cell 128）；
+        <b>SummaryMemory：</b>用 LLM 把历史持续压缩为一段摘要——增长最缓慢且能保留长程要点（如"首问是 1+1"仍可从摘要中答出，cell 147/150），但摘要会丢失细节且引入一次额外的 LLM 调用开销。
+        <b>选型：</b>按对话长度、成本预算与对早期信息的依赖程度权衡，也可组合使用。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">42.</span>描述"标题→角色→故事"三链式架构的数据流，并引用运行输出说明效果。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>数据流：</b>summary 先进入 title 链生成标题（output_key="title"）；character 链的模板同时引用 {summary} 与 {title} 生成角色描述（output_key="character"）；story 链再引用以上结果生成完整故事；三链用 | 串联，一次 invoke 级联完成；
+        <b>单链验证：</b>单独调用 title 链对 "a girl that lost her mother" 输出标题 "Echoes of a Mother's Absence"（cell 75）；
+        <b>级联验证：</b>三链联合调用后同一输入得到 title "Echoes of a Forgotten Mother's Embrace" 与角色/故事文本（cell 85），说明前级输出被自动填入后级模板，逐层细化了创作内容。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">43.</span>解释 ReAct 提示模板的各组成部分及其"思考—行动—观察"工作循环。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>模板组成：</b>Question（用户问题）、Thought（模型思考下一步）、Action（从 [{tool_names}] 中选择工具）、Action Input（工具入参）、Observation（工具返回结果），以上可循环 N 次，最后以 Final Answer 收尾；
+        <b>工作循环：</b>模型先思考需要什么信息（Thought），选择工具并给出入参（Action + Action Input），系统执行工具并把结果作为 Observation 反馈给模型，模型据此继续推理或再次调用工具，直到能给出 Final Answer；
+        <b>工具配置：</b>本章用 load_tools(["llm-math"]) 提供计算能力，并封装 DuckDuckGoSearchResults 为搜索工具；模型据此回答需要实时信息的提问（如 MacBook 价格换算）。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">44.</span>如果你要构建一个支持上百轮对话的客服机器人，会选择哪种记忆方案？请结合本章实验说明理由。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>Buffer 不可行：</b>上百轮对话全量注入会迅速超出 Phi-3 的 n_ctx=2048 窗口并推高成本；
+        <b>Window 的教训：</b>k=2 时连"年龄"都会遗忘（cell 128），窗口必须足够大，但再大也只是推迟遗忘；
+        <b>推荐：Summary 为主、Window 兜底的组合</b>——用摘要保留长程关键信息（实验证明可答出"第一问是 1+1"），用最近 k 轮窗口保住刚发生的细节；
+        <b>补充：</b>摘要改写会引入信息损失，重要字段（工单号、联系方式）可另行结构化存储，不依赖摘要记忆。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">答案已默认隐藏 · 复习完成后点击「显示全部答案」核对</footer>
+  </div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
+      var opts = q.querySelectorAll('ul.options li');
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk = correctKeys.indexOf(key) > -1;
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){
+      b.classList.add('hide-ans');
+    });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>

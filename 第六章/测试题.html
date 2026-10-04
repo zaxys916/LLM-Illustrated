@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第六章 提示工程 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style></head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>第六章 · 提示工程</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>提示工程的核心思想是什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>修改模型的权重以适配任务</li>
+      <li><span class="key">B</span>通过精心构造输入（提示词）引导模型生成期望输出</li>
+      <li><span class="key">C</span>为模型增加更多训练数据</li>
+      <li><span class="key">D</span>更换更大的模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">提示工程不改变模型参数，而是通过设计提示词（角色、上下文、格式要求等）来引导模型行为。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>Phi-3 提示模板中，用户指令以哪个标记开始？</div>
+    <ul class="options">
+      <li><span class="key">A</span><|system|></li>
+      <li><span class="key">B</span><|user|></li>
+      <li><span class="key">C</span><|assistant|></li>
+      <li><span class="key">D</span><|end|></li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">Phi-3 模板形如 <s><|user|> … <|end|><|assistant|>；<|user|> 标记用户指令的开始。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>Phi-3 模板中，提示词或模型输出的结束由哪个标记表示？</div>
+    <ul class="options">
+      <li><span class="key">A</span><|end|></li>
+      <li><span class="key">B</span><|endoftext|></li>
+      <li><span class="key">C</span><|eos|></li>
+      <li><span class="key">D</span><|sep|></li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp"><|end|> 标记提示词或输出的结束；运行 cell 19 渲染出的模板为 <s><|user|>…<|end|><|endoftext|>。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>temperature=0（贪心解码）时，模型对"Create a funny joke about chickens"生成的笑话是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>"…they're afraid of backyard hackers!"</li>
+      <li><span class="key">B</span>"…can't handle the hatch!"</li>
+      <li><span class="key">C</span>每次运行都随机不同</li>
+      <li><span class="key">D</span>模型拒绝生成</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">贪心解码总是选概率最高的词，输出确定：第一个笑话为 "Why don't chickens use computers? Because they're afraid of backyard hackers!"。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>调整采样参数后，模型对同一提示生成了完全不同的笑话（"can't handle the hatch!"）。这体现了什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>输出变得更确定</li>
+      <li><span class="key">B</span>采样引入随机性，使生成结果更多样</li>
+      <li><span class="key">C</span>模型能力提升了</li>
+      <li><span class="key">D</span>提示词被自动修改了</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">提高 temperature/top_p 后从概率分布中随机采样，相同提示可产生不同但同样合理的结果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>模型能正确用 "screeg" 造句，主要依靠什么机制？</div>
+    <ul class="options">
+      <li><span class="key">A</span>翻译能力</li>
+      <li><span class="key">B</span>通过提示中的示例（上下文学习）习得新词用法</li>
+      <li><span class="key">C</span>内置的计算能力</li>
+      <li><span class="key">D</span>联网检索词典</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">提示中给出 Gigamuru 的示例句（one-shot），模型仿照示例为 screeg 造句，未更新任何参数。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>企业命名链式架构最终生成的公司名是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>ChatGPT</li>
+      <li><span class="key">B</span>ChatSage</li>
+      <li><span class="key">C</span>SmartChat</li>
+      <li><span class="key">D</span>AI Companion</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">运行输出 "Name: ChatSage，Slogan: Your AI Companion for Smart Conversations"。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>汇总提示词各组件中，负责规定输出结构（项目符号+段落）的是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>persona</li>
+      <li><span class="key">B</span>context</li>
+      <li><span class="key">C</span>data_format</li>
+      <li><span class="key">D</span>tone</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">data_format 说明输出的组织形式；persona 角色设定、context 背景说明、audience 受众、tone 语气。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>思维链（CoT）提示主要改善模型在哪方面的表现？</div>
+    <ul class="options">
+      <li><span class="key">A</span>多步推理准确性</li>
+      <li><span class="key">B</span>生成速度</li>
+      <li><span class="key">C</span>显存占用</li>
+      <li><span class="key">D</span>词表大小</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">CoT 让模型显式写出中间步骤，显著提升需要多步推导的任务（如数学题）的表现。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>"食堂原有 23 个苹果，做午餐用掉 20 个，又买来 6 个，现在有多少个？"模型推理后的最终答案是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>3</li>
+      <li><span class="key">B</span>6</li>
+      <li><span class="key">C</span>9</li>
+      <li><span class="key">D</span>49</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">三种提示方式（zero-shot CoT、分步模板、ToT）模型均得出 23 − 20 = 3，3 + 6 = 9。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>树状思维（ToT）实验中，三位专家分别推理后的结论是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>三位专家结论各不相同</li>
+      <li><span class="key">B</span>三位专家都得出了 9 个苹果</li>
+      <li><span class="key">C</span>只有一位专家算对</li>
+      <li><span class="key">D</span>无法得出结论</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">三个专家路径虽详略不同，但最终都得到 3 + 6 = 9，验证了多路径推理的一致性。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>让模型以 JSON 格式输出的主要价值是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>生成速度更快</li>
+      <li><span class="key">B</span>输出结构化，便于程序解析和下游系统使用</li>
+      <li><span class="key">C</span>节省词元数量</li>
+      <li><span class="key">D</span>提升模型创造力</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">JSON 输出可被 json.loads 直接解析，"让我们更有信心地在需要输出遵循特定格式的应用中使用生成模型"。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>使用 one-shot JSON 模板后，模型生成的 RPG 角色名是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Eldrin</li>
+      <li><span class="key">B</span>Shadowcloak</li>
+      <li><span class="key">C</span>Aldan</li>
+      <li><span class="key">D</span>Ranger</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">one-shot 模板生成 "Shadowcloak"（Leather Hood + Dagger 的 rogue）；Eldrin 是无示例模板的输出，Aldan 是 llama.cpp 的输出。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>llama.cpp 在本章的作用是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>训练 Phi-3 模型</li>
+      <li><span class="key">B</span>在本地运行量化（GGUF q4）的语言模型</li>
+      <li><span class="key">C</span>部署网页服务</li>
+      <li><span class="key">D</span>自动标注数据</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">llama.cpp 加载本地 Phi-3-mini-4k-instruct-q4.gguf（约 2.1GB 量化模型），实现消费级硬件上的本地推理。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>LangChain 的 PromptTemplate 的作用是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>将变量自动填入模板生成完整提示词</li>
+      <li><span class="key">B</span>缓存模型输出</li>
+      <li><span class="key">C</span>对文本分词</li>
+      <li><span class="key">D</span>微调模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">PromptTemplate 定义含 {变量} 的模板与 input_variables，调用时自动填充，避免每次手工拼提示词。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">16.</span>本章"论文汇总"提示词包含的组件有哪些？</div>
+    <ul class="options">
+      <li><span class="key">A</span>persona：LLM 专家角色设定</li>
+      <li><span class="key">B</span>context：提取关键信息帮助研究者快速理解</li>
+      <li><span class="key">C</span>data_format：项目符号+段落的输出结构</li>
+      <li><span class="key">D</span>audience 与 tone：受众与语气</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">五个组件（persona、context、data_format、audience、tone）+ instruction 共同构成结构化提示词。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">17.</span>下列哪些参数会影响生成的随机性？</div>
+    <ul class="options">
+      <li><span class="key">A</span>temperature</li>
+      <li><span class="key">B</span>top_p</li>
+      <li><span class="key">C</span>do_sample</li>
+      <li><span class="key">D</span>n_ctx（上下文窗口大小）</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">temperature 调节分布平滑度，top_p 截断候选词集合，do_sample 决定是否采样；n_ctx 只决定上下文长度，与随机性无关。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">18.</span>上下文学习（in-context learning）的三种形式是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>zero-shot：不给示例直接提问</li>
+      <li><span class="key">B</span>one-shot：提供一个示例</li>
+      <li><span class="key">C</span>few-shot：提供多个示例</li>
+      <li><span class="key">D</span>full-shot：用全部数据微调</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">三种形式均在提示中给出任务描述/示例，不更新模型权重；D 不是上下文学习的形式。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">19.</span>本章涉及的思维链（CoT）相关技术有哪些？</div>
+    <ul class="options">
+      <li><span class="key">A</span>zero-shot CoT（"Let's think step by step"）</li>
+      <li><span class="key">B</span>分步提示模板</li>
+      <li><span class="key">C</span>ToT（树状思维，多专家/多路径）</li>
+      <li><span class="key">D</span>BatchNorm 归一化</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">三种 CoT 变体都让模型显式展开中间推理步骤；BatchNorm 是神经网络训练技术，与此无关。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">20.</span>要让 LLM 输出可靠的 JSON，可以采用哪些策略？</div>
+    <ul class="options">
+      <li><span class="key">A</span>在模板中明确给出 JSON 字段结构</li>
+      <li><span class="key">B</span>提供一个完整的 one-shot 示例</li>
+      <li><span class="key">C</span>提供多个 few-shot 示例</li>
+      <li><span class="key">D</span>生成后用解析器校验，失败则重试</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">运行结果表明：无示例时可能生成意外字段（Eldrin 案例多出 attributes 等），one-shot 后输出更贴合 schema；解析校验+重试是工程上的最后保障。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">21.</span>LangChain 在本章出现的组件包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>PromptTemplate 提示词模板</li>
+      <li><span class="key">B</span>LLMChain 链式架构</li>
+      <li><span class="key">C</span>LlamaCpp 本地量化模型封装</li>
+      <li><span class="key">D</span>HDBSCAN 聚类</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">LangChain 负责提示模板、链式组合与本地模型接入；HDBSCAN 属于第五章 BERTopic 的聚类组件。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">22.</span>temperature 越高，模型的输出越确定、越可复现。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">temperature 越高采样分布越平坦，输出越随机多样；temperature=0（贪心）才是确定的。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">23.</span>Phi-3 模板中 <|end|> 标记提示词或模型输出的结束。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp"><|user|> 开始、<|end|> 结束是 Phi-3 模板的基本约定。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">24.</span>上下文学习无需更新模型的任何参数。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">示例只存在于提示词中，模型权重保持不变，这是提示工程的核心优势之一。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">25.</span>one-shot 提示是指在提示词中提供恰好一个任务示例。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">如 Gigamuru 示例句；zero-shot 不给示例，few-shot 给多个示例。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">26.</span>相同提示词配合贪心解码（temperature=0）必然得到完全相同的输出。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">贪心解码每步都选概率最高的词，过程确定，因此输出可复现。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">27.</span>只要在提示中要求模型输出 JSON，输出就一定语法正确。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">模型可能遗漏字段、格式漂移甚至夹带说明文字，工程上仍需解析校验与重试。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">28.</span>llama.cpp 可以在本地运行 GGUF 量化模型，无须联网调用 API。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">本章用 llama.cpp 加载本地 Phi-3 q4 模型完成离线推理。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">29.</span>提示工程会永久改变模型的权重。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">提示工程只改变输入，不改变模型参数；改变权重属于微调范畴。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">30.</span>ToT 中每条专家推理路径独立展开，最后综合得到答案。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">本章三位专家分别推理，结果一致（9 个苹果），体现多路径互证的价值。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">31.</span>top_p 采样只在累积概率达到 p 的最小候选集合内随机取样。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">这是核采样（nucleus sampling）的定义，与 temperature 一起控制生成多样性。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">32.</span>Phi-3 提示模板中，用户指令以标记<span class="blank" data-ans="<|user|>"><|user|></span>开始。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：<|user|></span>
+      <span class="exp">完整模板：<s><|user|>指令<|end|><|assistant|>回复<|end|>。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">33.</span>temperature=0 时，模型每一步都选择概率最高的词，这种策略称为<span class="blank" data-ans="贪心">贪心</span>解码。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：贪心</span>
+      <span class="exp">贪心（greedy）解码输出确定可复现，如第一个"鸡"笑话的固定结果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">34.</span>"23 个苹果用掉 20 个再买 6 个"的分步推理最终答案是<span class="blank" data-ans="9">9</span>个。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：9</span>
+      <span class="exp">23 − 20 = 3，3 + 6 = 9；三种提示方式结论一致。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">35.</span>在提示中提供一个示例的上下文学习方式称为<span class="blank" data-ans="one">one</span>-shot。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：one</span>
+      <span class="exp">Gigamuru/screeg 造句即 one-shot；零示例为 zero-shot，多示例为 few-shot。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">36.</span>企业命名链式架构输出的公司名是<span class="blank" data-ans="ChatSage">ChatSage</span>。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ChatSage</span>
+      <span class="exp">同时输出口号 "Your AI Companion for Smart Conversations"。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">37.</span>one-shot JSON 模板生成的角色名为<span class="blank" data-ans="Shadowcloak">Shadowcloak</span>，职业设定为 rogue。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：Shadowcloak</span>
+      <span class="exp">输出 description/name/armor/weapon 四个字段，完全贴合模板 schema。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">38.</span>ToT 实验中并行推理的专家共有<span class="blank" data-ans="3">3</span>位。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：3</span>
+      <span class="exp">三位专家（Expert 1/2/3）分别推理后结论一致。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">39.</span>llama.cpp 加载的量化模型格式为<span class="blank" data-ans="GGUF">GGUF</span>（q4 量化，约 2.1GB）。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：GGUF</span>
+      <span class="exp">Phi-3-mini-4k-instruct-q4.gguf，可在消费级硬件本地运行。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>点击「显示答案」查看参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">40.</span>结合本章两次"鸡笑话"的运行结果，说明 temperature 与采样对生成内容的影响。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>贪心解码（temperature=0）：</b>每步取概率最高的词，输出固定——"Why don't chickens use computers? Because they're afraid of backyard hackers!"
+        <b>开启采样后：</b>从概率分布随机取样，得到完全不同的笑话——"Why don't chickens play poker in the dark? Because they can't handle the hatch!"
+        <b>结论：</b>temperature 越低越确定、可复现，适合摘要/代码等任务；temperature 越高越多样，适合创意写作。top_p 通过限制候选词的累积概率进一步控制"发散程度"。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">41.</span>什么是上下文学习？以本章 Gigamuru/screeg 为例说明 zero-shot、one-shot、few-shot 的区别。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>上下文学习：</b>把任务说明与示例直接写进提示词，模型"现学现用"，全程不更新任何参数。
+        <b>zero-shot：</b>只有任务描述、无示例；<b>one-shot：</b>给一个示例（本章先演示 Gigamuru 的例句）；<b>few-shot：</b>给多个示例，通常效果更稳。
+        <b>实例：</b>提示中给出 Gigamuru 的示例句后，模型为未见过的词 screeg 造出正确句子 "During the medieval reenactment, the knight skillfully screeg the wooden target with his broadsword…"，说明模型通过示例学会了新词的用法。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">42.</span>对比"直接提问 + Let's think step by step"与"分步提示模板"两种 CoT 方案在苹果推理题上的表现。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>zero-shot CoT：</b>附加一句 "Let's think step by step"，模型输出连贯的单段推理（23 − 20 = 3，3 + 6 = 9），得到 "The answer is 9."；
+        <b>分步模板：</b>提示中显式给出 Step 1/2/3 的框架，模型按结构逐步填充，输出格式更清晰、更易校验；
+        <b>共同点：</b>两者都显著降低跳步出错概率，最终答案一致（9 个），但分步模板在工程上更可控。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">43.</span>简述树状思维（ToT）的流程，并结合运行结果说明其优势。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>流程：</b>在提示中设定 N 位"专家"（本章 N=3）独立求解同一问题，隐式形成多条推理路径，最后将各路径结果汇总比较，取一致或多数结论。
+        <b>运行结果：</b>三位专家分别推理苹果问题：路径详略不同（专家 2 最简洁，专家 3 最完整），但都得出 3 + 6 = 9。
+        <b>优势：</b>多条独立路径互相验证，降低单次推理"跑偏"的概率；代价是生成次数增多、耗时更长。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">44.</span>要让 LLM 输出可被程序直接解析的 JSON，应如何在提示词层面设计？请结合本章 RPG 角色卡的实验说明。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>结构化模板：</b>在提示中明确给出 JSON 的字段与层级（description/name/armor/weapon）；
+        <b>one-shot/few-shot 示例：</b>提供一个完整示例可显著提升输出对 schema 的贴合度——无示例的 Eldrin 输出混入了额外字段（attributes/skills 等），one-shot 后 Shadowcloak 严格输出四个字段；
+        <b>工程兜底：</b>输出后用 json.loads 校验，失败则把错误信息附回提示词重试；
+        <b>扩展：</b>llama.cpp 侧同样支持 JSON 模式（Aldan the Brave 的结构化输出），可见结构化提示+解析校验是通用模式。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">答案已默认隐藏 · 复习完成后点击「显示全部答案」核对</footer>
+  </div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
+      var opts = q.querySelectorAll('ul.options li');
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk = correctKeys.indexOf(key) > -1;
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){
+      b.classList.add('hide-ans');
+    });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
