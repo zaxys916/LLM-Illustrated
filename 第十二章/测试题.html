@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第十二章 微调生成模型 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style></head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>第十二章 · 微调生成模型</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>创建高质量 LLM 的第一步是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>监督微调</li>
+      <li><span class="key">B</span>偏好调优</li>
+      <li><span class="key">C</span>在大规模文本数据集上预训练（语言建模）</li>
+      <li><span class="key">D</span>人工评估</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">预训练通过预测下一个词元学习语言和语义表示，产出基座模型（图12-1）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>基座模型的主要局限是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>参数量太小</li>
+      <li><span class="key">B</span>不会遵循指令，只会尝试预测下一个词</li>
+      <li><span class="key">C</span>训练数据太多</li>
+      <li><span class="key">D</span>推理速度太慢</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">基座模型未被训练来遵循指令，它会补全问题而非回答问题（图12-5）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>全量微调与预训练的主要区别在于？</div>
+    <ul class="options">
+      <li><span class="key">A</span>全量微调使用较小但已标注的数据集</li>
+      <li><span class="key">B</span>全量微调不更新参数</li>
+      <li><span class="key">C</span>预训练使用 GPU</li>
+      <li><span class="key">D</span>全量微调需要更多显存</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">全量微调在已标注的小数据集上更新全部参数；预训练在无标注大数据集上自监督学习（图12-6）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>参数高效微调（PEFT）的核心目标是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>减少可训练参数，降低计算与存储成本</li>
+      <li><span class="key">B</span>增加模型层数</li>
+      <li><span class="key">C</span>替换所有权重</li>
+      <li><span class="key">D</span>删除基座模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">PEFT 通过只微调少量参数（如适配器或 LoRA），在保持性能的同时大幅降低训练成本。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>适配器（Adapter）最早是为哪个模型提出的？</div>
+    <ul class="options">
+      <li><span class="key">A</span>GPT-3</li>
+      <li><span class="key">B</span>BERT</li>
+      <li><span class="key">C</span>TinyLlama</li>
+      <li><span class="key">D</span>T5</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">适配器在论文"Parameter-Efficient Transfer Learning for NLP"中提出，仅微调 BERT 的 3.6% 参数即可接近全量微调性能。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>LoRA 通过什么方式减少可训练参数？</div>
+    <ul class="options">
+      <li><span class="key">A</span>添加新的 Transformer 块</li>
+      <li><span class="key">B</span>将大权重矩阵分解为两个低秩小矩阵的乘积</li>
+      <li><span class="key">C</span>删除一半权重</li>
+      <li><span class="key">D</span>使用更大的数据集</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">LoRA 用两个低秩矩阵（如 12288×8）近似原始大矩阵，可训练参数从 1.5 亿降至约 9.8 万（图12-13）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>QLoRA 中的"Q"代表什么？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Query</li>
+      <li><span class="key">B</span>Quantization（量化）</li>
+      <li><span class="key">C</span>Quality</li>
+      <li><span class="key">D</span>Quick</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">QLoRA 是 LoRA 的量化版本，使用 bitsandbytes 将模型压缩为 4 位表示以节省显存。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>本章用于指令微调的开源小模型是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>Phi-3-mini</li>
+      <li><span class="key">B</span>TinyLlama</li>
+      <li><span class="key">C</span>Llama-2-70B</li>
+      <li><span class="key">D</span>GPT-4</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">本章使用 TinyLlama-1.1B 作为基座模型进行 QLoRA 指令微调。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>在 LoRA 配置中，参数 r 的含义是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>学习率</li>
+      <li><span class="key">B</span>压缩矩阵的秩，决定低秩矩阵的大小</li>
+      <li><span class="key">C</span>训练轮次</li>
+      <li><span class="key">D</span>批次大小</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">r 是低秩矩阵的秩，通常在 4 到 64 之间；增大 r 提高表示能力但降低压缩率。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>QLoRA 训练完成后，合并权重时通常使用什么精度重新加载模型？</div>
+    <ul class="options">
+      <li><span class="key">A</span>4 位</li>
+      <li><span class="key">B</span>8 位</li>
+      <li><span class="key">C</span>16 位（fp16/bf16）</li>
+      <li><span class="key">D</span>32 位</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">用 16 位精度重新加载基座模型，再与训练好的 LoRA 权重合并，以获得更高质量的推理效果。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>评估生成模型时，"困惑度"（Perplexity）衡量的是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型对下一个词元的预测能力</li>
+      <li><span class="key">B</span>生成文本的长度</li>
+      <li><span class="key">C</span>训练数据的多样性</li>
+      <li><span class="key">D</span>GPU 显存占用</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">困惑度衡量语言模型预测下一个词元的概率；概率越高，困惑度越低，模型表现越好（图12-20）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>Chatbot Arena 的评估方式是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>完全自动化的词级指标</li>
+      <li><span class="key">B</span>基于人工投票的匿名对比评估，采用 Elo 评分系统</li>
+      <li><span class="key">C</span>只测编程能力</li>
+      <li><span class="key">D</span>固定基准测试集</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">Chatbot Arena 让用户与两个匿名 LLM 对话并投票选择更好的回答，基于 80 多万张人工投票计算 Elo 排名。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>奖励模型的核心作用是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>替代人工评估，自动给生成内容打分</li>
+      <li><span class="key">B</span>增加模型参数量</li>
+      <li><span class="key">C</span>减少训练数据</li>
+      <li><span class="key">D</span>删除基座模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：A</span>
+      <span class="exp">奖励模型接收提示词和生成内容，输出一个质量分数，用于在偏好调优中自动评估输出（图12-26）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>DPO（直接偏好优化）相比 PPO 的主要优势是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>需要训练更多模型</li>
+      <li><span class="key">B</span>摒弃了单独的奖励模型，直接用 LLM 自身作为奖励模型，训练更稳定、成本更低</li>
+      <li><span class="key">C</span>必须使用强化学习</li>
+      <li><span class="key">D</span>只能用于分类任务</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">DPO 不再需要单独训练奖励模型，而是利用参考模型与可训练模型的输出概率偏移来优化，训练更稳定且成本更低（图12-32）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>本章 DPO 训练设置了多少步？</div>
+    <ul class="options">
+      <li><span class="key">A</span>1000 步</li>
+      <li><span class="key">B</span>500 步</li>
+      <li><span class="key">C</span>200 步</li>
+      <li><span class="key">D</span>1 个完整 epoch</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">为演示目的，DPO 仅运行 200 步而非完整 epoch，以节省时间。</span>
+    </div>
+  </div>
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个及以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">16.</span>创建高质量 LLM 通常包括哪三个步骤？</div>
+    <ul class="options">
+      <li><span class="key">A</span>预训练（语言建模）</li>
+      <li><span class="key">B</span>监督微调（SFT）</li>
+      <li><span class="key">C</span>偏好调优</li>
+      <li><span class="key">D</span>人工标注所有数据</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">三步走：预训练产出基座模型 → 监督微调学会遵循指令 → 偏好调优对齐人类偏好（图12-3）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">17.</span>关于 LoRA 的超参数，正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>r 控制压缩矩阵的秩</li>
+      <li><span class="key">B</span>lora_alpha 经验上设为 r 的两倍</li>
+      <li><span class="key">C</span>target_modules 决定哪些层被微调</li>
+      <li><span class="key">D</span>r 越大压缩率越高</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">r 越大低秩矩阵越大，压缩率越低但表示能力越强；lora_alpha 平衡原始知识与新知识；target_modules 可选择特定投影层。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">18.</span>QLoRA 相比全量微调的优势包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>4 位量化显著降低显存占用</li>
+      <li><span class="key">B</span>只需训练少量 LoRA 参数，速度快</li>
+      <li><span class="key">C</span>显存需求从约 4GB 降至约 1GB（仅加载）</li>
+      <li><span class="key">D</span>必须使用更大的数据集</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">QLoRA 通过 4 位量化 + LoRA 低秩微调，在保持性能的同时大幅降低显存与计算成本。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">19.</span>评估生成模型的常用方法包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>词级指标（困惑度、ROUGE、BLEU）</li>
+      <li><span class="key">B</span>公共基准测试（MMLU、GSM8k、HumanEval）</li>
+      <li><span class="key">C</span>排行榜（Open LLM Leaderboard）</li>
+      <li><span class="key">D</span>人工评估与 LLM-as-a-judge</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">以上都是常见评估手段，但没有单一金标准，需根据应用场景组合使用。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">20.</span>偏好调优的三个阶段（使用奖励模型时）包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>收集偏好数据（被接受/被拒绝的生成内容）</li>
+      <li><span class="key">B</span>训练奖励模型</li>
+      <li><span class="key">C</span>用奖励模型作为评估器微调 LLM</li>
+      <li><span class="key">D</span>删除基座模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">传统偏好调优（PPO）需要：收集偏好数据 → 训练奖励模型 → 用奖励模型微调 LLM（图12-30）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">21.</span>关于 DPO 的说法，正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>不需要单独训练奖励模型</li>
+      <li><span class="key">B</span>使用参考模型与可训练模型的输出概率偏移</li>
+      <li><span class="key">C</span>比 PPO 训练更稳定、准确度更高</li>
+      <li><span class="key">D</span>必须使用 4 位量化</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">DPO 摒弃了强化学习流程，直接比较参考模型与可训练模型在被接受/被拒绝内容上的概率偏移，训练更稳定；量化是可选的显存优化手段。</span>
+    </div>
+  </div>
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">22.</span>基座模型经过预训练后可以直接很好地遵循用户指令。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">基座模型只会预测下一个词，不会遵循指令；需要经过监督微调才能学会对话（图12-5）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">23.</span>LoRA 需要向模型中添加新的 Transformer 层。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">LoRA 不添加新层，而是用两个低秩矩阵近似原始权重矩阵，只微调这些小矩阵（图12-11）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">24.</span>QLoRA 使用 4 位量化后，模型加载显存从约 4GB 降至约 1GB。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">4 位量化显著压缩模型体积，加载显存约从 4GB 降至 1GB，但训练时显存需求会增加。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">25.</span>困惑度可以全面衡量生成文本的创造性、流畅度和正确性。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">困惑度只衡量模型预测下一个词元的能力，无法衡量一致性、流畅度、创造力或正确性。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">26.</span>人工评估被认为是评估生成模型的金标准。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">尽管基准测试很重要，但人工评估能最好地反映人类偏好与实际应用场景的匹配度。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">27.</span>奖励模型训练时，目标是让被接受的生成内容得分低于被拒绝的内容。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">训练目标是让被接受的内容得分高于被拒绝的内容（图12-29）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">28.</span>DPO 需要单独训练一个奖励模型来评估生成质量。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">DPO 摒弃了单独的奖励模型，直接用 LLM 的参考模型与可训练模型比较概率偏移。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">29.</span>本章 DPO 训练使用了与 SFT 不同的 LoRA 配置。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">本章 DPO 使用了与之前 SFT 相同的 LoRA 配置，只是训练步数减少为 200 步并添加了 warmup。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">30.</span>SFT 和 DPO 可以结合使用，先让模型学会对话，再根据人类偏好调整回答。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">SFT 赋予模型基础对话能力，DPO 进一步对齐人类偏好；但代价是需要两轮训练。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">31.</span>ORPO 将 SFT 和 DPO 合并为一个训练过程，不需要两轮训练。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">ORPO（优势比偏好优化）将监督微调与偏好调优合并为单一训练过程，进一步简化流程。</span>
+    </div>
+  </div>
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">32.</span>创建高质量 LLM 的第一步是<span class="blank" data-ans="预训练">预训练</span>，通过预测下一个词元学习语言表示。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：预训练</span>
+      <span class="exp">预训练（语言建模）是自监督学习，产出基座模型（图12-1）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">33.</span>LoRA 用两个<span class="blank" data-ans="低秩">低秩</span>矩阵的乘积来近似原始大权重矩阵。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：低秩</span>
+      <span class="exp">如将 12288×12288 矩阵分解为两个 12288×8 矩阵，参数量从 1.5 亿降至约 9.8 万（图12-13）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">34.</span>QLoRA 使用 <span class="blank" data-ans="4">4</span> 位标准化浮点数表示来量化模型权重。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：4</span>
+      <span class="exp">4 位量化配合分块量化与分布感知块，在大幅降低显存的同时保持性能。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">35.</span>本章用于指令微调的数据集是 <span class="blank" data-ans="UltraChat">UltraChat</span> 的一个子集。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：UltraChat</span>
+      <span class="exp">UltraChat 包含近 20 万条用户与 LLM 的对话，本章选取 3000 条作为子集。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">36.</span>评估生成模型时，<span class="blank" data-ans="困惑度">困惑度</span>衡量模型预测下一个词元的概率。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：困惑度</span>
+      <span class="exp">困惑度越低，说明模型对文本的预测能力越强。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">37.</span>DPO 通过比较<span class="blank" data-ans="参考模型">参考模型</span>与可训练模型的输出概率偏移来优化。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：参考模型</span>
+      <span class="exp">DPO 使用 LLM 的一个冻结副本作为参考模型，计算被接受/被拒绝内容的概率偏移（图12-32）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">38.</span>在 LoRA 配置中，<span class="blank" data-ans="lora_alpha">lora_alpha</span> 控制添加到原始权重的变化量，经验上设为 r 的两倍。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：lora_alpha</span>
+      <span class="exp">lora_alpha 平衡原始模型知识与新任务知识，通常设为 r 的两倍。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">39.</span>本章 DPO 训练仅运行了<span class="blank" data-ans="200">200</span>步用于演示。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：200</span>
+      <span class="exp">为节省时间，DPO 未运行完整 epoch，而是仅训练 200 步。</span>
+    </div>
+  </div>
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>点击「显示答案」查看参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">40.</span>说明全量微调与 LoRA/QLoRA 的核心区别，并解释为什么 LoRA/QLoRA 更实用。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>全量微调：</b>更新模型全部参数，需要大量显存、算力和存储空间；
+        <b>LoRA：</b>冻结原始权重，只训练两个低秩小矩阵，参数量从亿级降至万级；
+        <b>QLoRA：</b>在 LoRA 基础上将基座模型 4 位量化，加载显存从约 4GB 降至约 1GB；
+        <b>实用性：</b>在消费级 GPU 上即可微调大模型，训练更快、存储更小，且性能接近全量微调。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">41.</span>描述偏好调优的两种主要方法（PPO 与 DPO）的工作流程及优缺点。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>PPO（基于奖励模型）：</b>①收集偏好数据（被接受/被拒绝的生成内容）→ ②训练奖励模型 → ③用奖励模型通过强化学习微调 LLM。优点：经典有效；缺点：需训练两个模型，成本高、训练不稳定；
+        <b>DPO（直接偏好优化）：</b>无需单独奖励模型，直接用参考模型与可训练模型的输出概率偏移来优化。优点：训练更稳定、成本更低、准确度更高；缺点：对参考模型质量有依赖。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">42.</span>为什么评估生成模型很困难？列举本章提到的评估方法并说明其局限。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>困难原因：</b>生成模型应用场景多样，单一指标无法覆盖；概率性导致输出不一致；
+        <b>方法：</b>①词级指标（困惑度、ROUGE）——无法衡量创造性/正确性；②基准测试（MMLU、GSM8k）——可能过拟合、覆盖不全；③排行榜——依赖公开基准；④LLM-as-a-judge——评判标准可能漂移；⑤人工评估（Chatbot Arena）——成本高、众包意见可能与实际场景脱节；
+        <b>结论：</b>没有金标准，需按应用场景组合评估，人工评估仍是最终裁判。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">43.</span>结合本章实验，说明 SFT 与 DPO 结合使用的意义及代价。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>意义：</b>SFT 让基座模型学会遵循指令、进行基础对话；DPO 在此基础上根据人类偏好进一步优化回答质量，使模型输出更符合期望；
+        <b>实验：</b>本章先用 QLoRA 对 TinyLlama 进行指令微调（SFT），再用 DPO 对指令模型进行偏好调优，最终模型能生成更符合人类偏好的回答；
+        <b>代价：</b>需要两轮独立的训练过程，每轮都需调整超参数，时间与计算成本翻倍；ORPO 等新方法尝试将两者合并以降低成本。
+      </span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">44.</span>如果你要在自己的项目中微调一个 7B 模型，你会选择全量微调、LoRA 还是 QLoRA？请结合本章内容说明理由。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp">
+        <b>推荐 QLoRA：</b>7B 模型全量微调需要数十 GB 显存，消费级 GPU 无法承受；QLoRA 通过 4 位量化将加载显存降至约 1GB，配合 LoRA 低秩微调，可在单张消费级显卡（如 RTX 4070 Ti 12GB）上完成训练；
+        <b>性能：</b>论文证明 LoRA/QLoRA 在多数任务上性能接近全量微调；
+        <b>灵活性：</b>训练后的 LoRA 权重可独立保存与合并，便于管理多个任务适配器；
+        <b>注意事项：</b>需合理设置 r（通常 4-64）、lora_alpha（约 2r）、target_modules，并使用 16 位精度合并权重以获得最佳推理质量。
+      </span>
+    </div>
+  </div>
+
+  <footer class="foot">答案已默认隐藏 · 复习完成后点击「显示全部答案」核对</footer>
+  </div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
+      var opts = q.querySelectorAll('ul.options li');
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk = correctKeys.indexOf(key) > -1;
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){
+      b.classList.add('hide-ans');
+    });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
