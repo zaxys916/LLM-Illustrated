@@ -20,3 +20,21 @@ checkpoints/
 model/
 mlm/
 ner_model/
+
+# 第12章 LoRA/QLoRA 微调产物
+TinyLlama-1.1B-qlora/
+TinyLlama-1.1B-dpo-qlora/
+
+# 模型权重与训练产物（通用兜底）
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.onnx
+*.ckpt
+
+# 实验追踪与训练日志
+wandb/
+runs/
+lightning_logs/
+trainer_log.jsonl
