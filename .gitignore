@@ -6,8 +6,8 @@
 
 models/
 
-# 数据集本地缓存（各章节 data/ 目录）
-data/
+# 数据集本地缓存（第十二章 ultrachat 约 3GB，超出 GitHub 单文件限制，不入库）
+第十二章/data/
 
 .ipynb_checkpoints/
 
