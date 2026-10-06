@@ -6,6 +6,9 @@
 
 models/
 
+# 数据集本地缓存（各章节 data/ 目录）
+data/
+
 .ipynb_checkpoints/
 
 # 嵌入模型训练输出
