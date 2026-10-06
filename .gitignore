@@ -10,6 +10,7 @@ models/
 第十二章/data/
 
 .ipynb_checkpoints/
+__pycache__/
 
 # 嵌入模型训练输出
 *_embedding_model/
