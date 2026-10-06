@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第四章 文本分类 · 测试题</title>
+<style>
+  :root{
+    --bg:#f5f7fa;
+    --card:#ffffff;
+    --text:#1f2933;
+    --text-soft:#5b6770;
+    --line:#e3e8ee;
+    --brand:#2f6fed;
+    --brand-soft:#eaf1ff;
+    --ok:#12805c;
+    --ok-bg:#e6f6f0;
+    --bad:#c0392b;
+    --bad-bg:#fdeceb;
+    --warn:#b7791f;
+    --warn-bg:#fff8e6;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    padding:32px 16px 80px;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    font-size:15px;
+    line-height:1.75;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  header.page{
+    background:linear-gradient(135deg,#2f6fed,#5b8def);
+    color:#fff;
+    border-radius:16px;
+    padding:28px 30px;
+    box-shadow:0 8px 24px rgba(47,111,237,.22);
+  }
+  header.page h1{margin:0 0 8px;font-size:24px;letter-spacing:.5px;}
+  header.page p{margin:0;opacity:.92;font-size:14px;}
+
+  .toolbar{
+    position:sticky;top:0;z-index:20;
+    display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    margin:18px 0 22px;
+    padding:12px 14px;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .toolbar .spacer{flex:1;}
+  .toolbar .hint{font-size:13px;color:var(--text-soft);}
+  button{
+    font-family:inherit;font-size:13.5px;cursor:pointer;
+    border-radius:8px;padding:7px 14px;border:1px solid var(--line);
+    background:#fff;color:var(--text);transition:.15s;
+  }
+  button:hover{border-color:var(--brand);color:var(--brand);}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+  button.primary:hover{background:#245ac9;color:#fff;}
+  button.ghost{background:transparent;}
+
+  h2.sec{
+    margin:34px 0 14px;font-size:18px;
+    padding-left:12px;border-left:4px solid var(--brand);
+  }
+  h2.sec span{font-size:13px;color:var(--text-soft);font-weight:400;margin-left:8px;}
+
+  .q{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:14px;
+    transition:box-shadow .15s;
+  }
+  .q:hover{box-shadow:0 4px 14px rgba(31,41,51,.06);}
+  .stem{font-weight:600;margin-bottom:12px;}
+  .stem .idx{
+    display:inline-block;min-width:24px;
+    color:var(--brand);font-weight:700;
+  }
+  .tag{
+    display:inline-block;font-size:12px;font-weight:400;
+    color:var(--brand);background:var(--brand-soft);
+    border-radius:5px;padding:1px 7px;margin-left:8px;vertical-align:1px;
+  }
+
+  ul.options{list-style:none;margin:0;padding:0;}
+  ul.options li{
+    border:1px solid var(--line);border-radius:9px;
+    padding:8px 12px;margin-bottom:8px;
+    cursor:pointer;transition:.15s;user-select:none;
+  }
+  ul.options li:hover{border-color:#bcd0f5;background:#fafcff;}
+  ul.options li.picked{border-color:var(--brand);background:var(--brand-soft);}
+  ul.options li.correct{border-color:var(--ok);background:var(--ok-bg);}
+  ul.options li.wrong{border-color:var(--bad);background:var(--bad-bg);}
+  ul.options li .key{font-weight:700;margin-right:8px;color:var(--brand);}
+  ul.options li.correct .key{color:var(--ok);}
+  ul.options li.wrong .key{color:var(--bad);}
+
+  .qfoot{margin-top:10px;display:flex;gap:10px;align-items:center;}
+  .qfoot .tbtn{
+    font-size:13px;padding:5px 12px;
+    border-radius:7px;border:1px dashed #c4d2e8;background:#fbfdff;color:var(--brand);
+  }
+  .qfoot .tbtn:hover{border-style:solid;}
+
+  .ans{
+    display:none;margin-top:12px;padding:12px 14px;
+    border-radius:9px;font-size:14px;
+    background:var(--ok-bg);border-left:3px solid var(--ok);
+  }
+  .ans.show{display:block;}
+  .ans .lbl{font-weight:700;color:var(--ok);margin-right:6px;}
+  .ans .exp{display:block;margin-top:8px;color:var(--text-soft);}
+  .ans .exp b{color:var(--text);}
+
+  .blank{
+    display:inline-block;min-width:96px;
+    border-bottom:1.5px dashed #b9c6d6;margin:0 4px;
+    text-align:center;color:var(--brand);font-weight:700;
+  }
+  .blank.hide-ans{color:transparent;}
+  .blank.hide-ans::after{content:"?";color:#c3ccd6;font-weight:400;}
+
+  .short textarea{
+    width:100%;min-height:76px;resize:vertical;
+    font-family:inherit;font-size:14px;line-height:1.7;
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    background:#fcfdff;color:var(--text);
+  }
+  .short textarea:focus{outline:none;border-color:var(--brand);background:#fff;}
+
+  footer.foot{
+    margin-top:40px;text-align:center;
+    font-size:13px;color:var(--text-soft);
+  }
+  @media (max-width:560px){
+    body{padding:16px 10px 60px;font-size:14.5px;}
+    header.page{padding:20px;}
+    .q{padding:15px;}
+  }
+</style></head>
+<body>
+<div class="wrap">
+  <header class="page">
+    <h1>第四章 · 文本分类</h1>
+    <p>共 44 题：单选 15 · 多选 6 · 判断 10 · 填空 8 · 简答 5　　答案默认隐藏，点击每题「显示答案」或顶部按钮查看</p>
+  </header>
+  <div class="toolbar">
+    <button class="primary" id="showAll">显示全部答案</button>
+    <button id="hideAll">隐藏全部答案</button>
+    <button class="ghost" id="resetAll">清除我的选择</button>
+    <span class="spacer"></span>
+    <span class="hint">提示：选项可点击标记你的作答</span>
+  </div>
+
+  <!-- ================= 一、单选题 ================= -->
+  <h2 class="sec">一、单选题 <span>每题只有一个正确答案</span></h2>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">1.</span>本章用于情感分析的数据集 rotten_tomatoes 的构成是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>5331 条正面评论</li>
+      <li><span class="key">B</span>5331 条正面评论和 5331 条负面评论</li>
+      <li><span class="key">C</span>约 2 万条电影短评</li>
+      <li><span class="key">D</span>5000 条推文</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">rotten_tomatoes 来自烂番茄网站，包含 5331 条正面评论和 5331 条负面评论，用于二元情感分类（4.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">2.</span>除了训练集和测试集，rotten_tomatoes 还划分了验证集，它的用途是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>用于最终评估模型性能</li>
+      <li><span class="key">B</span>用于训练模型</li>
+      <li><span class="key">C</span>在超参数调优后进一步验证模型的泛化能力</li>
+      <li><span class="key">D</span>用于生成嵌入向量</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">验证集用于在训练集和测试集上完成超参数调优后，进一步验证模型的泛化能力（4.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">3.</span>使用预训练表示模型进行分类，通常有两种方式，分别是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>提示工程与偏好调优</li>
+      <li><span class="key">B</span>使用特定任务模型或使用嵌入模型</li>
+      <li><span class="key">C</span>量化与蒸馏</li>
+      <li><span class="key">D</span>BERT 与 GPT</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">一种是针对特定任务（如情感分析）训练的特定任务模型，另一种是生成通用嵌入向量的嵌入模型（4.2 节，图4-3）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">4.</span>本章选择的特定任务模型 Twitter-roBERTa-base for Sentiment Analysis 的特点是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>专门在电影评论上训练</li>
+      <li><span class="key">B</span>在推文上针对情感分析微调的 RoBERTa 模型</li>
+      <li><span class="key">C</span>基于 GPT 的生成模型</li>
+      <li><span class="key">D</span>只支持中文</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">它是在推文上微调的 RoBERTa 情感分析模型，虽非针对电影评论训练，但可用于检验泛化能力（4.3 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">5.</span>本章选择哪个模型作为生成嵌入向量的嵌入模型？</div>
+    <ul class="options">
+      <li><span class="key">A</span>bert-base-uncased</li>
+      <li><span class="key">B</span>sentence-transformers/all-mpnet-base-v2</li>
+      <li><span class="key">C</span>GPT-3.5</li>
+      <li><span class="key">D</span>Twitter-roBERTa</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">all-mpnet-base-v2 小巧且性能优秀，是 MTEB 排行榜上表现良好的常用嵌入模型（4.3 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">6.</span>为嵌入模型选择提供参考的 MTEB 是指？</div>
+    <ul class="options">
+      <li><span class="key">A</span>一个大规模文本分类数据集</li>
+      <li><span class="key">B</span>对多个任务进行基准测试的排行榜</li>
+      <li><span class="key">C</span>OpenAI 的嵌入 API</li>
+      <li><span class="key">D</span>一种分词算法</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">MTEB 排行榜包含在多个任务上基准测试过的开源与专有模型，是选模型的良好起点（4.3 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">7.</span>词元的一个主要优势是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>让模型体积变小</li>
+      <li><span class="key">B</span>即使词不在训练数据中，也可将其分解为词元组合出语义表示</li>
+      <li><span class="key">C</span>加快训练速度</li>
+      <li><span class="key">D</span>避免使用 GPU</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">通过将未知词分解为词元，仍然可以生成词嵌入，这是词元表示的核心优势（图4-7）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">8.</span>混淆矩阵描述的四种预测组合是基于哪两个维度？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型大小与数据量</li>
+      <li><span class="key">B</span>预测正确/错误、预测为正例/负例</li>
+      <li><span class="key">C</span>精确率与召回率</li>
+      <li><span class="key">D</span>训练集与测试集</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">根据预测结果正确(True)与否以及预测分类为正例还是负例，形成四种组合，即混淆矩阵（4.4 节，图4-8）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">9.</span>F1 分数的含义是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>正确预测占总预测的比例</li>
+      <li><span class="key">B</span>平衡精确率和召回率，衡量模型整体性能</li>
+      <li><span class="key">C</span>识别出的结果中相关的比例</li>
+      <li><span class="key">D</span>相关类别中被识别出的比例</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">F1 分数综合精确率与召回率，衡量模型整体性能；准确率才是正确预测占所有预测的比例（4.4 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">10.</span>召回率（recall）衡量的是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>模型识别出的结果中有多少是相关的</li>
+      <li><span class="key">B</span>所有相关类别中有多少被成功识别出来</li>
+      <li><span class="key">C</span>模型训练速度</li>
+      <li><span class="key">D</span>嵌入向量的维度</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">召回率评估模型找到所有相关结果的能力；精确率评估识别出的结果的准确性（4.4 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">11.</span>本章 all-mpnet-base-v2 生成嵌入向量的维度是多少？</div>
+    <ul class="options">
+      <li><span class="key">A</span>384</li>
+      <li><span class="key">B</span>512</li>
+      <li><span class="key">C</span>768</li>
+      <li><span class="key">D</span>1024</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">8530 个训练文档每个都得到一个 768 维嵌入向量，即每个向量包含 768 个数值（4.5.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">12.</span>嵌入向量两步法分类的第二步中，本章使用什么分类器？</div>
+    <ul class="options">
+      <li><span class="key">A</span>随机森林</li>
+      <li><span class="key">B</span>支持向量机</li>
+      <li><span class="key">C</span>逻辑回归</li>
+      <li><span class="key">D</span>神经网络</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">将嵌入向量作为特征训练逻辑回归分类器，可在 CPU 上完成训练，F1 达到 0.85（4.5.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">13.</span>零样本分类中，为文档分配标签依据的是文档嵌入与标签嵌入之间的？</div>
+    <ul class="options">
+      <li><span class="key">A</span>欧氏距离</li>
+      <li><span class="key">B</span>余弦相似度</li>
+      <li><span class="key">C</span>曼哈顿距离</li>
+      <li><span class="key">D</span>杰卡德系数</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">计算文档与候选标签描述的余弦相似度，选择相似度最高的标签（4.5.2 节，图4-15）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">14.</span>T5 模型采用的架构是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>仅编码器</li>
+      <li><span class="key">B</span>仅解码器</li>
+      <li><span class="key">C</span>编码器-解码器（12 个编码器 + 12 个解码器）</li>
+      <li><span class="key">D</span>混合专家</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：C</span>
+      <span class="exp">T5 与原始 Transformer 类似，将 12 个编码器和 12 个解码器堆叠，属于序列到序列模型（4.6.1 节，图4-19）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="single">
+    <div class="stem"><span class="idx">15.</span>ChatGPT 训练过程中的重要组件是？</div>
+    <ul class="options">
+      <li><span class="key">A</span>掩码语言建模</li>
+      <li><span class="key">B</span>偏好调优</li>
+      <li><span class="key">C</span>词元跨度掩码</li>
+      <li><span class="key">D</span>对比学习</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：B</span>
+      <span class="exp">OpenAI 先用指令数据微调，再通过人工排序的偏好数据进行偏好调优，创建最终模型（4.6.2 节，图4-22/4-23）。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 二、多选题 ================= -->
+  <h2 class="sec">二、多选题 <span>每题有两个或以上正确答案</span></h2>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">16.</span>下列属于 BERT 变体/类 BERT 模型的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>RoBERTa</li>
+      <li><span class="key">B</span>DistilBERT</li>
+      <li><span class="key">C</span>ALBERT 与 DeBERTa</li>
+      <li><span class="key">D</span>FLAN-T5</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">RoBERTa、DistilBERT、ALBERT、DeBERTa 都是类 BERT 的仅编码器模型；FLAN-T5 是编码器-解码器生成模型（4.3 节，图4-5）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">17.</span>分类报告中给出的四个常用评估指标包括？</div>
+    <ul class="options">
+      <li><span class="key">A</span>精确率</li>
+      <li><span class="key">B</span>召回率</li>
+      <li><span class="key">C</span>准确率</li>
+      <li><span class="key">D</span>F1 分数</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABCD</span>
+      <span class="exp">四个指标分别衡量相关性准确性、找到所有相关结果的能力、整体正确比例，以及精确率与召回率的平衡（4.4 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">18.</span>为提升所选特定任务模型的性能，本章提到的思路有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>选择在电影评论等特定领域数据上训练的模型（如 SST-2 微调的 DistilBERT）</li>
+      <li><span class="key">B</span>转向使用嵌入模型</li>
+      <li><span class="key">C</span>把训练集扩大 10 倍</li>
+      <li><span class="key">D</span>删除测试集</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：AB</span>
+      <span class="exp">可用领域内微调模型（基于大小写不敏感 DistilBERT base 的 SST-2），也可以尝试嵌入模型路线（4.4 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">19.</span>本章展示了嵌入向量可以用于哪些任务？</div>
+    <ul class="options">
+      <li><span class="key">A</span>作为特征训练分类器</li>
+      <li><span class="key">B</span>零样本分类</li>
+      <li><span class="key">C</span>语义搜索（第8章）</li>
+      <li><span class="key">D</span>训练分词器</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">嵌入向量可用于监督分类、零样本分类和语义搜索等场景，几乎存在于所有语言 AI 应用中（4.5 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">20.</span>关于 T5/FLAN-T5 的训练方式，正确的有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>预训练时对词元跨度（span）整体掩码并预测</li>
+      <li><span class="key">B</span>微调时将每个任务转换为序列到序列任务同时训练</li>
+      <li><span class="key">C</span>FLAN-T5 仅针对情感分析单一任务训练</li>
+      <li><span class="key">D</span>T5 采用仅解码器架构</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：AB</span>
+      <span class="exp">T5 预训练对词元跨度整体掩码；微调时把各种任务统一转成 text-to-text 形式，FLAN-T5 更是在超过 1000 个任务上指令微调（4.6.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="multi">
+    <div class="stem"><span class="idx">21.</span>使用 OpenAI API 处理数据集前需要注意的事项有？</div>
+    <ul class="options">
+      <li><span class="key">A</span>始终追踪使用情况，避免费用快速增长</li>
+      <li><span class="key">B</span>注意速率限制错误</li>
+      <li><span class="key">C</span>实现指数退避等重试机制</li>
+      <li><span class="key">D</span>必须每次都重新训练模型</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：ABC</span>
+      <span class="exp">API 按用量计费且存在速率限制；遇到速率限制错误可用指数退避（每次失败后增加休眠时间）重试（4.6.2 节）。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 三、判断题 ================= -->
+  <h2 class="sec">三、判断题 <span>判断下列说法是否正确</span></h2>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">22.</span>本章使用的表示模型（特定任务模型和嵌入模型）在分类过程中均保持冻结状态。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">本章不微调表示模型，仅使用其输出：特定任务模型直接分类，嵌入模型生成向量后再训练轻量分类器（图4-4）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">23.</span>仅编码器模型在分类等特定任务上表现不如生成模型。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">仅编码器模型（如 BERT 系列）在特定任务用例中表现出色，且规模往往比生成模型小得多（4.3 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">24.</span>书中建议将 TF-IDF + 逻辑回归等经典方法作为基准与语言模型进行比较。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">经典强大的基准方法（如 TF-IDF 表示 + 逻辑回归）值得与语言模型方法对比（章首）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">25.</span>两步法分类中，嵌入模型在训练逻辑回归分类器时会被同步更新。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">嵌入模型保持冻结，只用于生成特征；可训练的只有逻辑回归等轻量分类器（4.5.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">26.</span>训练逻辑回归分类器只需要生成的嵌入向量和对应的标签。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">训练过程只需使用生成的嵌入向量和对应标签，简单直接（4.5.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">27.</span>零样本分类必须准备标注数据才能预测标签。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">零样本分类只需知道标签名称/描述，无须标注数据，通过嵌入相似度即可分类（4.5.2 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">28.</span>将标签描述写得更具体（如「一条非常负面/正面的影评」）可能改善零样本分类效果。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">更具体的描述让嵌入捕捉到是电影评论且更关注极端性，可影响结果（4.5.2 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">29.</span>FLAN-T5 输出的是文本，评估前需要将 negative/positive 映射为 0/1 数值。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">生成模型输出文本，需要把输出词映射为数值后才能用 evaluate_performance 评估（4.6.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">30.</span>GPT-3.5 的 F1 分数 0.91 高于其他模型，因此可以确定它是最适合该任务的模型。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：×</span>
+      <span class="exp">由于不知道 GPT-3.5 的训练数据，它可能恰好在所用数据集上训练过，无法轻易用该指标下结论（4.6.2 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="judge">
+    <div class="stem"><span class="idx">31.</span>指数退避是指每次请求失败后短暂休眠再重试，且再次失败时休眠时间递增。</div>
+    <ul class="options">
+      <li><span class="key">√</span>正确</li>
+      <li><span class="key">×</span>错误</li>
+    </ul>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：√</span>
+      <span class="exp">指数退避逐步增加休眠时间重试，直到成功或达到最大重试次数（4.6.2 节）。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 四、填空题 ================= -->
+  <h2 class="sec">四、填空题 <span>点击「显示答案」查看空内内容</span></h2>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">32.</span>rotten_tomatoes 中的评论被标记为正例(1)或负例(0)，因此本章专注于<span class="blank" data-ans="二元">二元</span>情感分类。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：二元</span>
+      <span class="exp">每个样本只有正/负两类标签（4.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">33.</span>加载数据集时使用贯穿全书的 <span class="blank" data-ans="datasets">datasets</span> 包。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：datasets</span>
+      <span class="exp">from datasets import load_dataset 即可加载 Hugging Face 上的数据集（4.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">34.</span>零样本分类中，为标签撰写描述并生成嵌入向量后，通过计算文档与标签的<span class="blank" data-ans="余弦相似度">余弦相似度</span>来分配标签。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：余弦相似度</span>
+      <span class="exp">用嵌入向量点积除以长度乘积计算夹角余弦，选择相似度最高的标签（图4-15）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">35.</span>T5 的全称是 Text-to-Text Transfer Transformer，即<span class="blank" data-ans="文本到文本迁移">文本到文本迁移</span>Transformer。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：文本到文本迁移</span>
+      <span class="exp">T5 将所有任务统一为文本输入到文本输出的形式（4.6.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">36.</span>T5 预训练时不是对单个词元掩码，而是对词元<span class="blank" data-ans="跨度">跨度</span>（span）整体掩码。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：跨度</span>
+      <span class="exp">T5 一次掩码可能包含多个词元的集合，需要预测整个被掩码的跨度（图4-20）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">37.</span>加载 FLAN-T5 时使用「<span class="blank" data-ans="text2text">text2text</span>-generation」任务，这类任务通常为编码器-解码器模型预留。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：text2text</span>
+      <span class="exp">text2text-generation 是编码器-解码器生成模型的任务类型（4.6.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">38.</span>本章给每个文档前加的提示词是「Is the following sentence positive or <span class="blank" data-ans="negative">negative</span>?」。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：negative</span>
+      <span class="exp">通过明确指示模型判断正面还是负面来引导生成模型分类（4.6.1 节）。</span>
+    </div>
+  </div>
+
+  <div class="q" data-type="fill">
+    <div class="stem"><span class="idx">39.</span>使用 gpt-3.5-turbo-0125 模型运行整个测试数据集大约花费 <span class="blank" data-ans="3">3</span> 美分。</div>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">答案：3</span>
+      <span class="exp">费用在免费额度内，但未来可能变化，使用外部 API 要始终追踪用量（4.6.2 节）。</span>
+    </div>
+  </div>
+
+
+  <!-- ================= 五、简答题 ================= -->
+  <h2 class="sec">五、简答题 <span>点击「显示答案」查看参考答案</span></h2>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">40.</span>比较特定任务模型与嵌入模型进行文本分类的异同，并说明各自适用的场景。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp"><b>相同点：</b>都属于表示模型（通常基于 BERT 类仅编码器架构），本章中均保持冻结，不更新权重；<b>不同点：</b>特定任务模型直接输出类别标签（如在推文上微调的 RoBERTa），端到端使用；嵌入模型输出通用嵌入向量，需要再训练一个轻量分类器（如逻辑回归）才能分类；<b>适用场景：</b>有现成领域任务模型时优先直接用特定任务模型；找不到针对特定任务预训练的模型、或算力有限无法微调时，用嵌入模型+传统分类器的两步法，只需 CPU 即可训练（4.2/4.4/4.5 节）。</span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">41.</span>解释混淆矩阵的概念，并说明精确率、召回率、准确率、F1 分数四个指标的含义与关系。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp"><b>混淆矩阵：</b>按预测正确与否、预测为正例还是负例，把预测结果分为四种组合并用矩阵形式表示（图4-8）；<b>精确率：</b>模型识别出的结果中有多少是相关的，关注预测的准确性；<b>召回率：</b>所有相关类别中有多少被成功识别，关注找全的能力；<b>准确率：</b>所有预测中正确预测的比例，反映整体正确性；<b>F1 分数：</b>精确率与召回率的平衡（调和平均），衡量整体性能。本章采用加权平均 F1 以平等对待每个类别（4.4 节）。</span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">42.</span>描述「嵌入向量 + 分类器」两步法分类的完整流程，并说明它为什么比微调整个表示模型更节省资源。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp"><b>流程：</b>①用冻结的嵌入模型（all-mpnet-base-v2）对训练/测试文本调用 encode 生成 768 维嵌入向量（特征提取）；②以嵌入向量为特征、标签为目标，在 CPU 上训练逻辑回归分类器；③用训练好的分类器对测试集嵌入向量预测并评估；<b>省资源原因：</b>嵌入模型不更新参数，无需 GPU 训练大规模模型；只训练逻辑回归这类轻量分类器，计算量小、速度快；也可以改用 Cohere/OpenAI 的嵌入 API，让全流程完全脱离 GPU 运行（4.5.1 节，图4-10~4-12）。</span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">43.</span>阐述零样本分类的原理，并结合本章示例说明其实现步骤与效果。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp"><b>原理：</b>在没有标注数据、只有标签名称的情况下，利用嵌入向量的语义相似度判断文档与哪个标签描述最接近；<b>步骤：</b>①为标签撰写自然语言描述（如「A negative review」「A positive review」）；②用嵌入模型对标签描述生成嵌入向量；③对每条待分类文档生成嵌入向量；④计算文档与各标签的余弦相似度，选择相似度最高的标签；<b>效果：</b>完全不用标注数据即达到 0.78 的 F1，展示了嵌入向量的灵活性；优化标签描述（如「一条非常负面/正面的影评」）可能进一步提升效果（4.5.2 节，图4-13~4-16）。</span>
+    </div>
+  </div>
+
+  <div class="q short" data-type="short">
+    <div class="stem"><span class="idx">44.</span>对比表示模型与生成模型做文本分类的差异（输出形式、使用方式、评估方式），并总结本章四条技术路线的 F1 结果。</div>
+    <textarea placeholder="在此写下你的答案…"></textarea>
+    <div class="qfoot"><button class="tbtn">显示答案</button></div>
+    <div class="ans">
+      <span class="lbl">参考答案：</span>
+      <span class="exp"><b>输出形式：</b>特定任务模型输出类别数值/标签；生成模型输出文本（序列到序列），需将文本映射为数值再评估；<b>使用方式：</b>特定任务模型直接推理；生成模型需要提示工程（如「Is the following sentence positive or negative?」）引导；<b>评估方式：</b>表示模型直接用分类指标；生成模型还需注意其可能在评估数据上训练过，结论需谨慎；<b>本章结果：</b>特定任务模型（Twitter-roBERTa）F1≈0.80；嵌入+逻辑回归 F1≈0.85；零样本嵌入分类 F1≈0.78（无标注数据）；FLAN-T5 F1≈0.84；GPT-3.5 F1≈0.91（4.4~4.6 节）。</span>
+    </div>
+  </div>
+  <footer class="foot">答案已默认隐藏 · 复习完成后点击「显示全部答案」核对</footer>
+  </div>
+
+<script>
+(function(){
+  var KEYS = ['A','B','C','D'];
+
+  // 选项点击：单选/判断只选一个，多选可多选
+  document.querySelectorAll('.q').forEach(function(q){
+    var type = q.dataset.type;
+    if (type === 'fill' || type === 'short') return;
+    var opts = q.querySelectorAll('ul.options li');
+    opts.forEach(function(li){
+      li.addEventListener('click', function(){
+        if (type === 'multi') {
+          li.classList.toggle('picked');
+        } else {
+          opts.forEach(function(o){ o.classList.remove('picked'); });
+          li.classList.add('picked');
+        }
+      });
+    });
+  });
+
+  // 单题显示答案
+  function reveal(q){
+    var ans = q.querySelector('.ans');
+    if (!ans) return;
+    ans.classList.add('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '隐藏答案';
+
+    var type = q.dataset.type;
+    if (type === 'fill') {
+      q.querySelectorAll('.blank').forEach(function(b){ b.classList.remove('hide-ans'); });
+    } else if (type === 'single' || type === 'multi' || type === 'judge') {
+      // 从「答案：XX」中解析正确选项集合（单选/多选/判断通用）
+      var lbl = ans.querySelector('.lbl');
+      var correctKeys = lbl ? lbl.textContent.replace('答案：','').replace(/\s/g,'') : '';
+      var opts = q.querySelectorAll('ul.options li');
+      opts.forEach(function(li){
+        var key = li.querySelector('.key').textContent.trim();
+        var isOk = correctKeys.indexOf(key) > -1;
+        li.classList.remove('correct','wrong');
+        if (isOk) li.classList.add('correct');
+        else if (li.classList.contains('picked')) li.classList.add('wrong');
+      });
+    }
+  }
+
+  function conceal(q){
+    var ans = q.querySelector('.ans');
+    if (ans) ans.classList.remove('show');
+    var btn = q.querySelector('.tbtn');
+    if (btn) btn.textContent = '显示答案';
+    q.querySelectorAll('ul.options li').forEach(function(li){
+      li.classList.remove('correct','wrong');
+    });
+    q.querySelectorAll('.blank').forEach(function(b){
+      b.classList.add('hide-ans');
+    });
+  }
+
+  document.querySelectorAll('.tbtn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var q = btn.closest('.q');
+      var ans = q.querySelector('.ans');
+      if (ans.classList.contains('show')) conceal(q); else reveal(q);
+    });
+  });
+
+  document.getElementById('showAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(reveal);
+  });
+  document.getElementById('hideAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(conceal);
+  });
+  document.getElementById('resetAll').addEventListener('click', function(){
+    document.querySelectorAll('.q').forEach(function(q){
+      conceal(q);
+      q.querySelectorAll('ul.options li').forEach(function(li){ li.classList.remove('picked'); });
+      var ta = q.querySelector('textarea');
+      if (ta) ta.value = '';
+    });
+  });
+
+  // 初始化：填空题答案默认隐藏
+  document.querySelectorAll('.q[data-type="fill"] .blank').forEach(function(b){
+    b.classList.add('hide-ans');
+  });
+})();
+</script>
+</body>
+</html>
