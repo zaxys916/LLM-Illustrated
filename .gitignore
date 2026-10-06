@@ -11,6 +11,7 @@ models/
 
 .ipynb_checkpoints/
 __pycache__/
+cache-*.arrow
 
 # 嵌入模型训练输出
 *_embedding_model/

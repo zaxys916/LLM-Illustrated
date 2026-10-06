@@ -190,7 +190,7 @@
     <div class="qfoot"><button class="tbtn">显示答案</button></div>
     <div class="ans">
       <span class="lbl">答案：B</span>
-      <span class="exp">Phi-3 模板形如 <s><|user|> … <|end|><|assistant|>；<|user|> 标记用户指令的开始。</span>
+      <span class="exp">Phi-3 模板形如 &lt;s&gt;<|user|> … <|end|><|assistant|>；<|user|> 标记用户指令的开始。</span>
     </div>
   </div>
 
@@ -205,27 +205,27 @@
     <div class="qfoot"><button class="tbtn">显示答案</button></div>
     <div class="ans">
       <span class="lbl">答案：A</span>
-      <span class="exp"><|end|> 标记提示词或输出的结束；运行 cell 19 渲染出的模板为 <s><|user|>…<|end|><|endoftext|>。</span>
+      <span class="exp"><|end|> 标记提示词或输出的结束；运行 cell 19 渲染出的模板为 &lt;s&gt;<|user|>…<|end|><|endoftext|>。</span>
     </div>
   </div>
 
   <div class="q" data-type="single">
-    <div class="stem"><span class="idx">4.</span>temperature=0（贪心解码）时，模型对"Create a funny joke about chickens"生成的笑话是？</div>
+    <div class="stem"><span class="idx">4.</span>temperature=0（贪心解码）时，模型对"Create a funny joke about chickens."生成的笑话是？</div>
     <ul class="options">
-      <li><span class="key">A</span>"…they're afraid of backyard hackers!"</li>
-      <li><span class="key">B</span>"…can't handle the hatch!"</li>
+      <li><span class="key">A</span>"Why did the chicken join the band? Because it had the drumsticks!"</li>
+      <li><span class="key">B</span>"Why don't chickens use computers? Because they can't handle the hatch!"</li>
       <li><span class="key">C</span>每次运行都随机不同</li>
       <li><span class="key">D</span>模型拒绝生成</li>
     </ul>
     <div class="qfoot"><button class="tbtn">显示答案</button></div>
     <div class="ans">
       <span class="lbl">答案：A</span>
-      <span class="exp">贪心解码总是选概率最高的词，输出确定：第一个笑话为 "Why don't chickens use computers? Because they're afraid of backyard hackers!"。</span>
+      <span class="exp">贪心解码总是选概率最高的词，输出确定：实际输出为 "Why did the chicken join the band? Because it had the drumsticks!"。</span>
     </div>
   </div>
 
   <div class="q" data-type="single">
-    <div class="stem"><span class="idx">5.</span>调整采样参数后，模型对同一提示生成了完全不同的笑话（"can't handle the hatch!"）。这体现了什么？</div>
+    <div class="stem"><span class="idx">5.</span>调整采样参数后，模型对同一提示生成了完全不同的笑话（"Why do chickens make terrible comedians? Because they always crack an egg-ception!"）。这体现了什么？</div>
     <ul class="options">
       <li><span class="key">A</span>输出变得更确定</li>
       <li><span class="key">B</span>采样引入随机性，使生成结果更多样</li>
@@ -626,7 +626,7 @@
     <div class="qfoot"><button class="tbtn">显示答案</button></div>
     <div class="ans">
       <span class="lbl">答案：<|user|></span>
-      <span class="exp">完整模板：<s><|user|>指令<|end|><|assistant|>回复<|end|>。</span>
+      <span class="exp">完整模板：&lt;s&gt;<|user|>指令<|end|><|assistant|>回复<|end|>。</span>
     </div>
   </div>
 
@@ -704,8 +704,8 @@
     <div class="ans">
       <span class="lbl">参考答案：</span>
       <span class="exp">
-        <b>贪心解码（temperature=0）：</b>每步取概率最高的词，输出固定——"Why don't chickens use computers? Because they're afraid of backyard hackers!"
-        <b>开启采样后：</b>从概率分布随机取样，得到完全不同的笑话——"Why don't chickens play poker in the dark? Because they can't handle the hatch!"
+        <b>贪心解码（temperature=0）：</b>每步取概率最高的词，输出固定——"Why did the chicken join the band? Because it had the drumsticks!"
+        <b>开启采样后：</b>从概率分布随机取样，得到完全不同的笑话——"Why do chickens make terrible comedians? Because they always crack an egg-ception!"
         <b>结论：</b>temperature 越低越确定、可复现，适合摘要/代码等任务；temperature 越高越多样，适合创意写作。top_p 通过限制候选词的累积概率进一步控制"发散程度"。
       </span>
     </div>
